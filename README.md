@@ -10,6 +10,6 @@ matplotlib
 losito
 ```
 
-This pipeline works by generating an empty LOFAR image with only noise in it using LoSiTo and then injecting in its MODEL_DATA column a uniform 3d distribution of sources (then projected into the 2d plane).
+This pipeline works by generating an empty LOFAR image with only noise in it using LoSiTo and then injecting in its MODEL_DATA column a uniform 3d distribution of sources (then projected into the 2d plane). Then the image can be produced with WSClean or other softwares for radio imaging.
 
 For now the various parameters are given via argparse, it is possible that I will change this in the future with the implementation of a parset file.
