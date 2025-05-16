@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import os
-import argparse
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
@@ -82,7 +81,8 @@ class checks:
         plt.figure(figsize = (8, 8))
         plt.xlabel('r (pixel)')
         plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
-        plt.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')        
+        plt.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')
+        plt.legend(loc = 'best')        
         if save:
             plt.savefig('sphere_density_2d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
@@ -143,57 +143,57 @@ class run:
 # Main script
 #####################
 
-# Parameters
-parser = argparse.ArgumentParser()
-parser.add_argument('-npoints', dest = 'npoints', nargs = '?', type = int, const = 1, help = 'Number of points to generate')
-parser.add_argument('-r', dest = 'r', nargs = '?', type = float, const = 1, help = 'Radius of the sphere')
-parser.add_argument('-imsize', dest = 'imsize', nargs = '?', type = int, const = 1, help = 'Image size in pixels')
-parser.add_argument('-flux', dest = 'flux', nargs = '?', type = float, const = 1, help = 'Flux value in Jy of each source')
-parser.add_argument('-check', dest = 'check', action = 'store_true', help = 'Check the image and the distribution of points')
-parser.add_argument('-save', dest = 'save', action = 'store_true', help = 'Save the image and the distribution of points')
-parser.add_argument('-n', dest = 'name', nargs = '?', type = str, help = 'Name of the image from which you take the header information')
-parser.add_argument('-scale', nargs = '?', type = float, const = 1, help = 'Conversion scale in kpc/"')
-
-
-args = parser.parse_args()
-n_points = args.npoints   # Number of points to generate
-r = args.r                # Radius of the sphere in kpc
-imsize = args.imsize      # Image size in pixels
-flux_value = args.flux    # Flux value in Jy
-check = args.check
-save = args.save
-name = args.name
-scale = args.scale
-
-
 dir_work = os.getcwd() + '/'
 dir_plots = dir_work + 'plots/'
 dir_img = dir_work + 'img/'
 
 directory(dir_plots)  # create directory for plots
+directory(dir_img)    # create directory for images
 
+with open(dir_work + 'sim.parset', 'r') as file:
+    variables = {}
+    for line in file:
+        line = line.strip()  # Removes spaces and newlines
+        if '=' in line:
+            key, value = line.split('=', 1)  # Splits on the first '='
+            variables[key.strip()] = value.strip()  # adds to the dictionary
+            
+# Parameters
+# REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
+name = variables['name']
+n_points = int(variables['npoints'])   # Number of points to generate
+r = float(variables['r'])              # Radius of the sphere in kpc
+imsize = int(variables['imsize'])      # Image size in pixels
+flux_value = float(variables['flux'])  # Flux value in Jy
+scale = float(variables['scale'])      # Conversion scale in kpc/"
+save = variables['save']
+outname = variables['output']
+
+# opens the fits file to get the header and pixsize
 filename = dir_work + f'{name}.fits'
 hdul = fits.open(filename)
 header = hdul[0].header
-data = np.array(hdul[0].data[0,0,:,:]) # in this way I have a 2x2 array excluding the other axes
 pixsize = abs(header['CDELT1']) * 3600
 hdul.close()
 
-r = r / scale / pixsize
-sphere = run(n_points, r, imsize, flux_value, pixsize)
+# Generate the sphere
+r = r / scale / pixsize                # Convert radius to pixels 
+sphere = run(n_points, r, imsize, flux_value)
 x, y, z, image = sphere()
-fluxes = sphere.flux_calc(image)
+fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
 print(f'Total flux: {fluxes} Jy')
 
-output = dir_img + 'model_image.fits'
+os.chdir(dir_img)
+output = f'{outname}.fits'
 hdu = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
+os.chdir(dir_work)
+print(f'Image saved as {output}')
 
-if check:
-    os.chdir(dir_plots)
-    c = checks(x, y, z, imsize, image, r)
-    c.show_image(save = save)
-    if n_points < 10000:
-        c.plot3d(save = save)
-    c.show_dist(save = save)
-    os.chdir(dir_work)
+os.chdir(dir_plots)
+c = checks(x, y, z, imsize, image, r)
+c.show_image(save = save)
+if n_points < 10000:
+    c.plot3d(save = save)
+c.show_dist(save = save)
+os.chdir(dir_work)

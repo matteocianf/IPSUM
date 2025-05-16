@@ -1,0 +1,8 @@
+npoints = 500
+r = 2250
+imsize = 960
+flux = 0.1
+save = False
+name = test
+scale = 3.65
+output = test_model
