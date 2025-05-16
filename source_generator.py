@@ -150,7 +150,7 @@ dir_img = dir_work + 'img/'
 directory(dir_plots)  # create directory for plots
 directory(dir_img)    # create directory for images
 
-with open(dir_work + 'sim.parset', 'r') as file:
+with open(dir_work + 'intact.parset', 'r') as file:
     variables = {}
     for line in file:
         line = line.strip()  # Removes spaces and newlines
