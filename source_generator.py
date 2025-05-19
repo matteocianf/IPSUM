@@ -61,7 +61,7 @@ class checks:
             plt.savefig('sphere_3d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
         
-    def show_dist(self, c = 'royalblue', bins = 50, save = False):
+    def show_dist(self, c = 'royalblue', bins = 50, save = False, show_theoretical_densities = False):
         '''
         Shows the histogram of the density of points in the prpjected image
         '''
@@ -80,9 +80,14 @@ class checks:
         
         plt.figure(figsize = (8, 8))
         plt.xlabel('r (pixel)')
+        plt.ylabel('Density')
         plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
-        plt.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')
-        plt.legend(loc = 'best')        
+        if show_theoretical_densities: 
+            theoretical_densities = np.sqrt(self.r**2 - bin_centers**2)
+            theoretical_densities /= np.max(theoretical_densities)  # Normalize to the same scale
+            theoretical_densities *= np.max(densities)  # Scale to match the observed densities            
+            plt.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')
+            plt.legend(loc = 'best')        
         if save:
             plt.savefig('sphere_density_2d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
@@ -107,9 +112,8 @@ class run:
         '''
         theta = np.arccos(2 * np.random.uniform(0, 1, self.n_points) - 1)
         phi = 2 * np.pi * np.random.uniform(0, 1, self.n_points)
-        # rho = self.r * np.random.uniform(0, 1, self.n_points)  # strong overdensity in the center
-        rho = self.r * np.cbrt(np.random.uniform(0, 1, self.n_points))
-        
+        rho = self.r * np.cbrt(np.random.uniform(0, 1, self.n_points))  # Scale to the radius of the sphere
+        # Convert spherical coordinates to Cartesian coordinates
         x = rho * np.sin(theta) * np.cos(phi)
         y = rho * np.sin(theta) * np.sin(phi)
         z = rho * np.cos(theta)
@@ -173,7 +177,7 @@ outname = variables['output']
 filename = dir_work + f'{name}.fits'
 hdul = fits.open(filename)
 header = hdul[0].header
-pixsize = abs(header['CDELT1']) * 3600
+pixsize = abs(header['CDELT1']) * 3600  # from deg to arcsec
 hdul.close()
 
 # Generate the sphere
