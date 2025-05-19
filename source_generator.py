@@ -32,11 +32,16 @@ class checks:
         '''
         Shows the image of the sphere projection
         '''
-        plt.figure(figsize = (8, 8))
-        plt.imshow(image, cmap = cmap, origin = 'lower')
-        plt.colorbar(label = 'Flux (Jy)')
-        plt.xlabel('x (pixel)')
-        plt.ylabel('y (pixel)')
+        fig = plt.figure(figsize = (8, 8))
+        fig.subplots_adjust(wspace = 0)
+        ax = fig.add_subplot(111)
+        ax.tick_params('both', labelsize = 14)
+        ax.set_xlabel('x (pixel)', fontsize = 16)
+        ax.set_ylabel('y (pixel)', fontsize = 16)
+        im = ax.imshow(image, cmap = cmap, origin = 'lower')
+        clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
+        clb.set_label(label = 'Flux [Jy]', size = 18)
+        clb.ax.tick_params(labelsize = 12)
         if save:
             plt.savefig('projection_2d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
@@ -46,22 +51,24 @@ class checks:
         Shows the 3D plot of the sphere
         '''
         fig = plt.figure(figsize = (8, 8))
+        fig.subplots_adjust(wspace = 0)
         ax = fig.add_subplot(111, projection = '3d')
         # Set the plot limits
         limits = self.imsize/2
+        ax.tick_params('both', labelsize = 14)
         ax.set_xlim([-limits, limits])
         ax.set_ylim([-limits, limits])
         ax.set_zlim([-limits, limits])
-        ax.set_xlabel('x (pixel)')
-        ax.set_ylabel('y (pixel)')
-        ax.set_zlabel('z (pixel)')
+        ax.set_xlabel('x (pixel)', fontsize = 16)
+        ax.set_ylabel('y (pixel)', fontsize = 16)
+        ax.set_zlabel('z (pixel)', fontsize = 16)
         ax.set_aspect('equal', 'box')
         ax.scatter(self.x, self.y, self.z, s = s, c = color)
         if save:
             plt.savefig('sphere_3d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
         
-    def show_dist(self, c = 'royalblue', bins = 50, save = False, show_theoretical_densities = False):
+    def show_dist(self, c = 'royalblue', bins = 10, save = False, show_theoretical_densities = 1):
         '''
         Shows the histogram of the density of points in the prpjected image
         '''
@@ -74,19 +81,19 @@ class checks:
         # Calculate the density of points in each bin
         densities = counts / shell_areas
 
-        theoretical_densities = np.sqrt(self.r**2 - bin_centers**2)
-        theoretical_densities /= np.max(theoretical_densities)  # Normalize to the same scale
-        theoretical_densities *= np.max(densities)  # Scale to match the observed densities
-        
-        plt.figure(figsize = (8, 8))
-        plt.xlabel('r (pixel)')
-        plt.ylabel('Density')
-        plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
+        fig = plt.figure(figsize = (8, 8))
+        fig.subplots_adjust(wspace = 0)
+        ax = fig.add_subplot(111)
+        ax.tick_params('both', labelsize = 14)
+        ax.set_xlabel(r'$r$ [pixel]', fontsize = 16)
+        ax.set_ylabel('Density [sources/bin]', fontsize = 16)
+        # plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
+        ax.hist(bin_centers, color = c, bins = bins, alpha = 0.7, edgecolor = 'black', weights = densities, density = False)
         if show_theoretical_densities: 
-            theoretical_densities = np.sqrt(self.r**2 - bin_centers**2)
-            theoretical_densities /= np.max(theoretical_densities)  # Normalize to the same scale
-            theoretical_densities *= np.max(densities)  # Scale to match the observed densities            
-            plt.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')
+            theoretical_densities = np.sqrt(self.r**2 - bin_centers**2) # I might have to improve the normalization
+            theoretical_densities /= np.mean(theoretical_densities)      # Normalize to the same scale
+            theoretical_densities *= np.mean(densities)                  # Scale to match the observed densities            
+            ax.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')
             plt.legend(loc = 'best')        
         if save:
             plt.savefig('sphere_density_2d.png', dpi = 300, bbox_inches = 'tight')
