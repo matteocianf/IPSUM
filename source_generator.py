@@ -33,12 +33,11 @@ class checks:
         Shows the image of the sphere projection
         '''
         fig = plt.figure(figsize = (8, 8))
-        fig.subplots_adjust(wspace = 0)
         ax = fig.add_subplot(111)
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel('x [px]', fontsize = 16)
         ax.set_ylabel('y [px]', fontsize = 16)
-        im = ax.imshow(image, cmap = cmap, origin = 'lower')
+        im = ax.imshow(self.image, cmap = cmap, origin = 'lower')
         clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
         clb.set_label(label = 'Flux [Jy]', size = 18)
         clb.ax.tick_params(labelsize = 12)
@@ -51,7 +50,6 @@ class checks:
         Shows the 3D plot of the sphere
         '''
         fig = plt.figure(figsize = (8, 8))
-        fig.subplots_adjust(wspace = 0)
         ax = fig.add_subplot(111, projection = '3d')
         # Set the plot limits
         limits = self.imsize/2
@@ -72,7 +70,7 @@ class checks:
         '''
         Shows the histogram of the density of points in the prpjected image
         '''
-        distances = np.sqrt(self.x**2 + self.y**2)  # distances from the center
+        distances = np.hypot(self.x, self.y)        # distances from the center
         counts, bin_edges = np.histogram(distances, bins = bins, range = (0, self.r))
 
         # Calculate the area of each circular shell in 2D
@@ -82,7 +80,6 @@ class checks:
         densities = counts / shell_areas
 
         fig = plt.figure(figsize = (8, 8))
-        fig.subplots_adjust(wspace = 0)
         ax = fig.add_subplot(111)
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel(r'$r$ [pixel]', fontsize = 16)
@@ -106,7 +103,7 @@ class run:
         self.r = r
         self.imsize = imsize
         self.flux_value = flux_value
-        self.center = np.array([imsize // 2, imsize // 2])  # (x,y) coordinates of the center of the image
+        self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
         
     def __call__(self):
         x, y, z = self.generate_uniform_sphere()
@@ -134,12 +131,16 @@ class run:
         # Convert the 2D coordinates to pixel indices
         x_pixel = (x + self.center[0]).astype(int)
         y_pixel = (y + self.center[1]).astype(int)
-        # Ensure the pixel indices are within the image bounds
-        valid_indices = (x_pixel >= 0) & (x_pixel < imsize) & (y_pixel >= 0) & (y_pixel < imsize)
-        # Assign the flux value to the corresponding pixels in the image
-        for i in range(n_points):
-            if valid_indices[i]:
-                image[y_pixel[i], x_pixel[i]] += flux_value
+        valid_mask = (x_pixel >= 0) & (x_pixel < self.imsize) & \
+                     (y_pixel >= 0) & (y_pixel < self.imsize)
+          
+        # Filter the coordinates
+        x_pixel_valid = x_pixel[valid_mask]
+        y_pixel_valid = y_pixel[valid_mask]
+        
+        # Add flux to the image at valid pixel locations.
+        # np.add.at handles cases where multiple points map to the same pixel by summing.
+        np.add.at(image, (y_pixel_valid, x_pixel_valid), self.flux_value)
         return image
         
     def flux_calc(self, image):
@@ -154,20 +155,26 @@ class run:
 # Main script
 #####################
 
-dir_work = os.getcwd() + '/'
-dir_plots = dir_work + 'plots/'
-dir_img = dir_work + 'img/'
+dir_work = os.getcwd()
+dir_plots = os.path.join(dir_work, 'plots')
+dir_img = os.path.join(dir_work, 'img')
 
 directory(dir_plots)  # create directory for plots
 directory(dir_img)    # create directory for images
 
-with open(dir_work + 'intact.parset', 'r') as file:
-    variables = {}
-    for line in file:
-        line = line.strip()  # Removes spaces and newlines
-        if '=' in line:
-            key, value = line.split('=', 1)  # Splits on the first '='
-            variables[key.strip()] = value.strip()  # adds to the dictionary
+parset = os.path.join(dir_work, 'intact.parset')
+variables = {}
+try:
+    with open(parset, 'r') as file:
+        for line in file:
+            line = line.strip()                        # Removes spaces and newlines
+            if not line or line.startswith('#'):       # Skip empty lines or comments
+                continue
+            if '=' in line:
+                key, value = line.split('=', 1)        # Splits on the first '='
+                variables[key.strip()] = value.strip() # adds to the dictionary
+except FileNotFoundError:
+    print(f"Error: Parset file not found at {parset}") # Exit if parset file is missing
             
 # Parameters
 # REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
@@ -177,14 +184,19 @@ r = float(variables['r'])              # Radius of the sphere in kpc
 imsize = int(variables['imsize'])      # Image size in pixels
 flux_value = float(variables['flux'])  # Flux value in Jy
 scale = float(variables['scale'])      # Conversion scale in kpc/"
-save = variables['save']
+save = bool(variables['save'])
 outname = variables['output']
 
 # opens the fits file to get the header and pixsize
-filename = dir_work + f'{name}.fits'
-hdul = fits.open(filename)
-header = hdul[0].header
-pixsize = abs(header['CDELT1']) * 3600  # from deg to arcsec
+filename = os.path.join(dir_work, f'{name}.fits')
+try:
+    with fits.open(filename) as hdul:
+        header = hdul[0].header
+        pixsize = abs(header['CDELT1']) * 3600  # from deg to arcsec
+except FileNotFoundError:
+    print(f"Error: Input FITS file not found at {filename}")
+except KeyError:
+    print(f"Error: CDELT1 not found in FITS header of {filename}")
 hdul.close()
 
 # Generate the sphere
@@ -198,8 +210,13 @@ os.chdir(dir_img)
 output = f'{outname}.fits'
 hdu = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
+try:
+    hdu.writeto(output, overwrite = True)
+    print(f'Image saved as {output}')
+except Exception as e:
+    print(f"Error saving FITS file {output}: {e}")
 os.chdir(dir_work)
-print(f'Image saved as {output}')
+
 
 os.chdir(dir_plots)
 c = checks(x, y, z, imsize, image, r)
