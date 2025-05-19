@@ -2,12 +2,14 @@
 
 INTACT (INjector of mock discreTe sources in gAlaxy ClusTers) - Pipeline to create a mock observation starting from a real one and injecting discrete sources in it. This is specifically thought for galaxy clusters
 The current requirements are:
-```
+
+```[text]
 numpy
 astropy
 matplotlib
 losito (and dependences therein)
 ```
+
 This pipeline can be run inside the `flocs` or `PiLL` containers if you want to avoid installing the libraries on your machine.
 This pipeline works by generating an empty LOFAR image with only noise in it using LoSiTo and then injecting in its MODEL_DATA column a uniform 3d distribution of sources (then projected into the 2d plane). Then the image can be produced with WSClean or other softwares for radio imaging.
 The parameters are inputted via a file called `intact.parset`, there is an example file in the repo. It is important to notice that the imsize for the model must be the same as the input model imaged after the LoSiTo run.
@@ -28,6 +30,7 @@ Some examples of the plots are shown below.
 The pipeline works through the use of parset files.
 
 The settings for `intact.parset` are:
+
 + `npoints`, which is the number of point sources to generate;
 + `r`, radius of the sphere over which you want to distribute the sources, must be expressed in kpc;
 + `imsize`, size of the image in pixels, must be equal to the size of the empty image;
@@ -38,6 +41,7 @@ The settings for `intact.parset` are:
 + `output`, name of the output model.
 
 For `synthms.parset` the settings are:
+
 + `name`, name of the output MS file;
 + `tobs`, observation time in hours;
 + `station`, LOFAR station to use, can be `HBA`, `LBA` or `both`;
