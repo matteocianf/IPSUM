@@ -18,3 +18,4 @@ Remember to put the MS file in the `/mss` folder.
 If you choose to save the output of `source_generator.py` you will find the plots saved in the directory `/plots`. 
 ![2D projection of the 3D uniform distribution of points in the sphere.](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_projection.png)
 ![3D distribution of points inside the sphere](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_3d.png)
+![Histogram of the density of points in function of the radius of the sphere](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_density_2d.png)
