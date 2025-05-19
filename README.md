@@ -26,6 +26,7 @@ Some examples of the plots are shown below.
 ## Parsets
 
 The pipeline works through the use of parset files.
+
 The settings for `intact.parset` are:
 + `npoints`, which is the number of point sources to generate;
 + `r`, radius of the sphere over which you want to distribute the sources, must be expressed in kpc;
