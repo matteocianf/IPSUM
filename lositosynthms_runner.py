@@ -3,11 +3,11 @@
 import os
 import math
 
-dir_work = os.getcwd() + '/'
-dir_mss = dir_work + 'mss'
+dir_work = os.getcwd()
+dir_mss = os.path.join(dir_work, 'mss')
+synthms_parset = os.path.join(dir_work, 'synthms.parset')
 
-
-with open(dir_work + 'synthms.parset', 'r') as file:
+with open(synthms_parset, 'r') as file:
     variables = {}
     for line in file:
         line = line.strip()  # Removes spaces and newlines
