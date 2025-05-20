@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+########################################
+# Author: Matteo Cianfaglione          #
+# e-mail: matteo.cianfaglione@unibo.it #
+########################################
+
 import os
 import numpy as np
 from astropy.io import fits

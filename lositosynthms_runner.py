@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+########################################
+# Author: Matteo Cianfaglione          #
+# e-mail: matteo.cianfaglione@unibo.it #
+########################################
+
+
 import os
 import math
 
