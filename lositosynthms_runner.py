@@ -16,9 +16,9 @@ synthms_parset = os.path.join(dir_work, 'synthms.parset')
 with open(synthms_parset, 'r') as file:
     variables = {}
     for line in file:
-        line = line.strip()  # Removes spaces and newlines
+        line = line.strip()                         # Removes spaces and newlines
         if '=' in line:
-            key, value = line.split('=', 1)  # Splits on the first '='
+            key, value = line.split('=', 1)         # Splits on the first '='
             variables[key.strip()] = value.strip()  # adds to the dictionary
             
 # Parameters
