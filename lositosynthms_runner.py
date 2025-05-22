@@ -30,7 +30,7 @@ maxfreq = float(variables['maxfreq'])            # maximum frequency in MHz
 lofarversion = int(variables['lofarversion'])    # LOFAR version, 1 or 2
 chanpersb = int(variables['chanpersb'])          # channels per subband
 tres = float(variables['tres'])                  # time resolution in seconds
-start = float(variables['start'])                # start time in MJD
+start = float(variables['start']) * 3600 * 24    # start time in MJD
 ra = float(variables['ra'])                      # RA in degrees
 dec = float(variables['dec'])                    # DEC in degrees
 
