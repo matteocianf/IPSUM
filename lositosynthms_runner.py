@@ -30,6 +30,7 @@ maxfreq = float(variables['maxfreq'])            # maximum frequency in MHz
 lofarversion = int(variables['lofarversion'])    # LOFAR version, 1 or 2
 chanpersb = int(variables['chanpersb'])          # channels per subband
 tres = float(variables['tres'])                  # time resolution in seconds
+start = float(variables['start'])                # start time in MJD
 ra = float(variables['ra'])                      # RA in degrees
 dec = float(variables['dec'])                    # DEC in degrees
 
@@ -37,7 +38,7 @@ ra = math.radians(ra)
 dec = math.radians(dec)
 
 # os.chdir(dir_mss)
-cmd = f'./synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chapersb} --tres {tres}'
+cmd = f'./synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chanpersb} --tres {tres}'
 print(cmd)
 os.system(cmd)
 
