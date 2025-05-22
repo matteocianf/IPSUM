@@ -1,4 +1,4 @@
-name = test.ms
+name = test
 tobs = 24
 station = HBA
 minfreq = 120
@@ -6,3 +6,5 @@ maxfreq = 168
 lofarversion = 1
 ra = 250.0941
 dec = 46.7103
+chanpersb = 3
+tres = 4
