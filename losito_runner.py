@@ -56,7 +56,7 @@ losito_run = f'losito losito.parset'
 print(losito_run)
 os.system(losito_run)
 
-freq_avg = f'DP3 dp3_freqavg.parset'
+freq_avg = f'DP3 ../dp3_freqavg.parset'
 print(freq_avg)
 os.system(freq_avg)
 
