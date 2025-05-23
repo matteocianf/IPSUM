@@ -94,7 +94,7 @@ class checks:
         ax.set_xlabel(r'$r$ [pixel]', fontsize = 16)
         ax.set_ylabel('Density [sources/bin]', fontsize = 16)
         # plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
-        ax.hist(bin_centers, color = c, bins = bins, alpha = 0.7, edgecolor = 'black', weights = densities, density = False, label = 'Observed density')
+        ax.hist(bin_centers, facecolor = c, bins = bins, alpha = 0.75, edgecolor = 'black', weights = densities, density = False, label = 'Observed density')
         ax.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical density')
         plt.legend(loc = 'best')        
         if save:
@@ -157,7 +157,7 @@ class run:
 
 
 #####################
-# Main script
+#    Main script    #
 #####################
 
 dir_work = os.getcwd()
@@ -203,7 +203,6 @@ except FileNotFoundError:
 except KeyError:
     print(f"Error: CDELT1 not found in FITS header of {filename}")
 
-
 # Generate the sphere
 r = r / scale / pixsize                # Convert radius to pixels 
 sphere = run(n_points, r, imsize, flux_value)
@@ -223,6 +222,7 @@ except Exception as e:
 os.chdir(dir_work)
 
 
+# Check the distribution of points
 os.chdir(dir_plots)
 c = checks(x, y, z, imsize, image, r)
 c.show_image(save = save)
