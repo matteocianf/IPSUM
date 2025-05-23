@@ -55,10 +55,10 @@ os.system(cmd)
 
 if not os.path.exists(dir_mss):
     copy_cmd = f'cp -r {dir_mss} {dir_mss_bkp}'
-    os.system(mss_bkp)
+    os.system(copy_cmd)
     print(f"Backup directory {dir_mss_bkp} non existent, created")
 else:
-    print(f"Directory {dir_ms_bkp} found")
+    print(f"Directory {dir_mss_bkp} found")
 
 losito_run = f'losito ../losito.parset'
 print(losito_run)
