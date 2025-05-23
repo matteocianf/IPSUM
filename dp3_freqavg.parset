@@ -1,0 +1,9 @@
+msin = A2219*.MS
+msin.baseline = [CR]S*&
+msout = 
+msout.storemanager = dysco
+
+steps = [avg]
+
+avg.type = averager
+avg.freqstep = 115

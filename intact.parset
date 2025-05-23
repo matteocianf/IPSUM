@@ -1,8 +1,8 @@
-npoints = 500
+npoints = 300
 r = 2250
-imsize = 960
-flux = 0.1
-save = False
+imsize = 480
+flux = 0.00022
+save = True
 name = test
 scale = 3.65
 output = test_model

@@ -1,0 +1,6 @@
+msin = A2219_synth*.MS 
+skymodel = example.sky
+
+[noise]
+operation = NOISE
+outputcolumn = DATA
