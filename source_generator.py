@@ -193,7 +193,7 @@ save = bool(variables['save'])
 outname = variables['output']
 
 # opens the fits file to get the header and pixsize
-filename = os.path.join(dir_work, f'{name}.fits')
+filename = os.path.join(dir_img, f'{name}.fits')
 try:
     with fits.open(filename) as hdul:
         header = hdul[0].header
