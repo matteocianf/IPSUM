@@ -21,7 +21,7 @@ except FileNotFoundError:
     # Exit if parset file is missing
 
 model_name = variables['model_name']
-mss_name = variables['mss_name']
+mss_name = variables['mssname']
 
 predict_cmd = f'wsclean -predict -name {dir_img}{model_name} {dir_mss}/{mss_name} \
                 > log_predict.txt'
