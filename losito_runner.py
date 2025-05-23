@@ -48,11 +48,11 @@ ra = math.radians(ra)
 dec = math.radians(dec)
 
 os.chdir(dir_mss)
-cmd = f'./synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chanpersb} --tres {tres} --start {start}'
+cmd = f'synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chanpersb} --tres {tres} --start {start}'
 print(cmd)
 os.system(cmd)
 
-losito_run = f'./losito losito.parset'
+losito_run = f'losito losito.parset'
 print(losito_run)
 os.system(losito_run)
 
