@@ -15,9 +15,9 @@ synthms_parset = os.path.join(dir_work, 'synthms.parset')
 
 if not os.path.exists(dir_mss):
     os.mkdir(dir_mss)
-    print(f"Directory {dir_mss} created ")
+    print(f"Directory {dir_mss} non existent, created")
 else:
-    print(f"Directory {dir_mss} already existing")
+    print(f"Directory {dir_mss} found")
 
 try:
     with open(synthms_parset, 'r') as file:
