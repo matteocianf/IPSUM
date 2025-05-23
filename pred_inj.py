@@ -23,10 +23,10 @@ except FileNotFoundError:
 model_name = variables['model_name']
 mss_name = variables['mssname']
 
-predict_cmd = f'wsclean -predict -name {dir_img}{model_name} {dir_mss}/{mss_name} \
+predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
                 > log_predict.txt'
 
-mslist = [dir_mss + mss_name]
+mslist = [os.path.join(dir_mss, mss_name)]
 outcolumn = "inj"
 for i in range(len(mslist)):
     cmd = f'DP3 msin={mslist[i]} + msout=. steps=[] msout.datacolumn={outcolumn} \
