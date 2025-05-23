@@ -11,6 +11,7 @@ import math
 
 dir_work = os.getcwd()
 dir_mss = os.path.join(dir_work, 'mss')
+dir_mss_bkp = os.path.join(dir_work, 'mss-bkp')
 synthms_parset = os.path.join(dir_work, 'synthms.parset')
 
 if not os.path.exists(dir_mss):
@@ -51,6 +52,13 @@ os.chdir(dir_mss)
 cmd = f'synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chanpersb} --tres {tres} --start {start}'
 print(cmd)
 os.system(cmd)
+
+if not os.path.exists(dir_mss):
+    copy_cmd = f'cp -r {dir_mss} {dir_mss_bkp}'
+    os.system(mss_bkp)
+    print(f"Backup directory {dir_mss_bkp} non existent, created")
+else:
+    print(f"Directory {dir_ms_bkp} found")
 
 losito_run = f'losito ../losito.parset'
 print(losito_run)

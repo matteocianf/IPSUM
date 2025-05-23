@@ -1,4 +1,4 @@
-msin = A2219*.MS
+msin = A2219_synth.MS
 msin.baseline = [CR]S*&
 msout = 
 msout.storemanager = dysco

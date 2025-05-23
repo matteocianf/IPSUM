@@ -202,7 +202,7 @@ except FileNotFoundError:
     print(f"Error: Input FITS file not found at {filename}")
 except KeyError:
     print(f"Error: CDELT1 not found in FITS header of {filename}")
-hdul.close()
+
 
 # Generate the sphere
 r = r / scale / pixsize                # Convert radius to pixels 
