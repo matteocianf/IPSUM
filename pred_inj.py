@@ -23,7 +23,7 @@ except FileNotFoundError:
 model_name = variables['model_name']
 mss_name = variables['mss_name']
 
-predict_cmd = 'wsclean -predict -name {model_name} {dir_mss}/{mss_name} \
+predict_cmd = f'wsclean -predict -name {dir_img}{model_name} {dir_mss}/{mss_name} \
                 > log_predict.txt'
 
 mslist = [dir_mss + mss_name]
