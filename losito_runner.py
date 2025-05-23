@@ -64,12 +64,12 @@ losito_run = f'losito ../losito.parset'
 print(losito_run)
 os.system(losito_run)
 
+single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco'
+print(single_ms)
+os.system(single_ms)
+
 freq_avg = f'DP3 ../dp3_freqavg.parset'
 print(freq_avg)
 os.system(freq_avg)
-
-single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storemanager=dysco'
-print(single_ms)
-os.system(single_ms)
 
 os.chdir(dir_work)
