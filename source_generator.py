@@ -211,7 +211,7 @@ fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
 print(f'Total flux: {fluxes} Jy')
 
 os.chdir(dir_img)
-output = f'{outname}.fits'
+output = f'{outname}-model.fits'
 hdu = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
 try:
