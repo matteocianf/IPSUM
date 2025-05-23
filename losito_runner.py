@@ -52,7 +52,7 @@ cmd = f'synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfr
 print(cmd)
 os.system(cmd)
 
-losito_run = f'losito losito.parset'
+losito_run = f'losito ../losito.parset'
 print(losito_run)
 os.system(losito_run)
 
