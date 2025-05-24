@@ -6,7 +6,8 @@ import casacore.tables as pt
 dir_work = os.getcwd()
 dir_mss = os.path.join(dir_work, 'mss')
 dir_img = os.path.join(dir_work, 'img')
-inj_parset = os.path.join(dir_work, 'inj.parset')
+dir_parsets = os.path.join(dir_work, 'parsets')
+inj_parset = os.path.join(dir_parsets, 'inj.parset')
 
 try:
     with open(inj_parset, 'r') as file:
