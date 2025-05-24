@@ -209,7 +209,7 @@ r = r / scale / pixsize                # Convert radius to pixels
 sphere = run(n_points, r, imsize, flux_value)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
-print(f'Total flux: {fluxes} Jy')
+print(f'Total flux: {fluxes*1e3} mJy')
 
 os.chdir(dir_img)
 output = f'{outname}-model.fits'
