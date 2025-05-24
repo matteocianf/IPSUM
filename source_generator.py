@@ -163,11 +163,12 @@ class run:
 dir_work = os.getcwd()
 dir_plots = os.path.join(dir_work, 'plots')
 dir_img = os.path.join(dir_work, 'img')
+dir_parsets = os.path.join(dir_work, 'parsets')
 
 directory(dir_plots)  # create directory for plots
 directory(dir_img)    # create directory for images
 
-parset = os.path.join(dir_work, 'intact.parset')
+parset = os.path.join(dir_parsets, 'intact.parset')
 variables = {}
 try:
     with open(parset, 'r') as file:

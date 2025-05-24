@@ -12,7 +12,8 @@ import math
 dir_work = os.getcwd()
 dir_mss = os.path.join(dir_work, 'mss')
 dir_mss_bkp = os.path.join(dir_work, 'mss-bkp')
-synthms_parset = os.path.join(dir_work, 'synthms.parset')
+dir_parsets = os.path.join(dir_work, 'parsets')
+synthms_parset = os.path.join(dir_parsets, 'synthms.parset')
 
 if not os.path.exists(dir_mss):
     os.mkdir(dir_mss)
@@ -60,7 +61,7 @@ if not os.path.exists(dir_mss):
 else:
     print(f"Directory {dir_mss_bkp} found")
 
-losito_run = f'losito ../losito.parset'
+losito_run = f'losito {dir_parsets}/losito.parset'
 print(losito_run)
 os.system(losito_run)
 
@@ -68,7 +69,7 @@ single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco'
 print(single_ms)
 os.system(single_ms)
 
-freq_avg = f'DP3 ../dp3_freqavg.parset'
+freq_avg = f'DP3 {dir_parsets}/dp3_freqavg.parset'
 print(freq_avg)
 os.system(freq_avg)
 

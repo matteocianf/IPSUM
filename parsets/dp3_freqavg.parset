@@ -1,6 +1,6 @@
-msin = A2219_synth.MS
+msin = A2219.MS
 msin.baseline = [CR]S*&
-msout = 
+msout = .
 msout.storagemanager = dysco
 
 steps = [avg]
