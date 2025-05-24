@@ -25,8 +25,8 @@ model_name = variables['model_name']
 mss_name = variables['mssname']
 
 print('Predicting visibilities...')
-predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
-                > log_predict.txt'
+predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \n \
+                >log_predict.txt'
 print(predict_cmd)
 os.system(predict_cmd)
 print('Predicting visibilities done!')
@@ -54,7 +54,7 @@ for ms in mslist:
             print('Reading MODEL column')
             model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
             print('Subtraction...')
-            ts.putcol(outcolumn, data-model, startrow=row, nrow=stepsize, rowincr=1)
+            ts.putcol(outcolumn, data+model, startrow=row, nrow=stepsize, rowincr=1)
     else:
         for row in range(0, ts.nrows(), stepsize):
             print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
