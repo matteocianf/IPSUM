@@ -27,8 +27,8 @@ mss_name = variables['mssname']
 print('Predicting visibilities...')
 predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
                 > log_predict.txt'
-os.system(predict_cmd)
 print(predict_cmd)
+os.system(predict_cmd)
 print('Predicting visibilities done!')
 
 print('Adding a column to the MS...')
@@ -37,8 +37,8 @@ outcolumn = "inj"
 for i in range(len(mslist)):
     cmd = f'DP3 msin={mslist[i]} + msout=. steps=[] msout.datacolumn={outcolumn} \
             msin.datacolumn=DATA msout.storagemanager=dysco'
+    print(cmd)
     os.system(cmd)
-print(cmd)
 print('Column added!')
 
 print('Adding the model to the MS...')
