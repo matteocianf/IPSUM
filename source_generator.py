@@ -1,10 +1,29 @@
 #!/usr/bin/env python
 
+########################################
+# Author: Matteo Cianfaglione          #
+# e-mail: matteo.cianfaglione@unibo.it #
+########################################
+
 import os
+import logging
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
 
+
+# Set up logging
+logger = logging.getLogger('my_logger')
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler('source_generator.log', 'w+')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)  # You can set the desired log level for console output
+console_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 #########################
 # Functions and classes #
@@ -12,10 +31,11 @@ import matplotlib.pyplot as plt
 
 def directory(directory):
    if not os.path.exists(directory):
-     os.mkdir(directory)
-     print(f"Directory {directory} created ")
+    os.mkdir(directory)
+    logger.info(f"Directory {directory} created")
    else:
-     print(f"Directory {directory} already existing")
+    logger.info(f"Directory {directory} already exists")
+
 
 
 class checks:
@@ -66,7 +86,7 @@ class checks:
             plt.savefig('sphere_3d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
         
-    def show_dist(self, c = 'royalblue', bins = 10, save = False, show_theoretical_densities = 1):
+    def show_dist(self, c = 'royalblue', bins = 10, save = False):
         '''
         Shows the histogram of the density of points in the prpjected image
         '''
@@ -79,19 +99,19 @@ class checks:
         # Calculate the density of points in each bin
         densities = counts / shell_areas
 
+        theoretical_densities = np.sqrt(self.r**2 - bin_centers**2)
+        theoretical_densities /= np.mean(theoretical_densities)      # Normalize to the same scale
+        theoretical_densities *= np.mean(densities)                  # Scale to match the observed densities            
+
         fig = plt.figure(figsize = (8, 8))
         ax = fig.add_subplot(111)
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel(r'$r$ [pixel]', fontsize = 16)
         ax.set_ylabel('Density [sources/bin]', fontsize = 16)
         # plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
-        ax.hist(bin_centers, color = c, bins = bins, alpha = 0.7, edgecolor = 'black', weights = densities, density = False)
-        if show_theoretical_densities: 
-            theoretical_densities = np.sqrt(self.r**2 - bin_centers**2) # I might have to improve the normalization
-            theoretical_densities /= np.mean(theoretical_densities)      # Normalize to the same scale
-            theoretical_densities *= np.mean(densities)                  # Scale to match the observed densities            
-            ax.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical Density')
-            plt.legend(loc = 'best')        
+        ax.hist(bin_centers, facecolor = c, bins = bins, alpha = 0.75, edgecolor = 'black', weights = densities, density = False, label = 'Observed density')
+        ax.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical density')
+        plt.legend(loc = 'best')        
         if save:
             plt.savefig('sphere_density_2d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
@@ -152,17 +172,26 @@ class run:
 
 
 #####################
-# Main script
+#    Main script    #
 #####################
 
+logger.info("Starting source generation...")
+
+# Set up directories
 dir_work = os.getcwd()
 dir_plots = os.path.join(dir_work, 'plots')
 dir_img = os.path.join(dir_work, 'img')
+dir_parsets = os.path.join(dir_work, 'parsets')
 
 directory(dir_plots)  # create directory for plots
 directory(dir_img)    # create directory for images
 
-parset = os.path.join(dir_work, 'intact.parset')
+logger.info(f"Working directory: {dir_work}")
+logger.info(f"Image directory: {dir_img}")
+logger.info(f"Parset directory: {dir_parsets}")
+logger.info(f"Plots directory: {dir_plots}")
+
+parset = os.path.join(dir_parsets, 'intact.parset')
 variables = {}
 try:
     with open(parset, 'r') as file:
@@ -174,7 +203,7 @@ try:
                 key, value = line.split('=', 1)        # Splits on the first '='
                 variables[key.strip()] = value.strip() # adds to the dictionary
 except FileNotFoundError:
-    print(f"Error: Parset file not found at {parset}") # Exit if parset file is missing
+    logger.error(f"Parset file not found at {parset}")# Exit if parset file is missing
             
 # Parameters
 # REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
@@ -188,36 +217,36 @@ save = bool(variables['save'])
 outname = variables['output']
 
 # opens the fits file to get the header and pixsize
-filename = os.path.join(dir_work, f'{name}.fits')
+filename = dir_img + '/' + name + '.fits'
 try:
     with fits.open(filename) as hdul:
         header = hdul[0].header
         pixsize = abs(header['CDELT1']) * 3600  # from deg to arcsec
 except FileNotFoundError:
-    print(f"Error: Input FITS file not found at {filename}")
+    logger.error(f"Input FITS file not found at {filename}")
 except KeyError:
-    print(f"Error: CDELT1 not found in FITS header of {filename}")
-hdul.close()
+    logger.error(f"CDELT1 not found in FITS header of {filename}")
 
 # Generate the sphere
 r = r / scale / pixsize                # Convert radius to pixels 
 sphere = run(n_points, r, imsize, flux_value)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
-print(f'Total flux: {fluxes} Jy')
+logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
 
 os.chdir(dir_img)
-output = f'{outname}.fits'
+output = f'{outname}-model.fits'
 hdu = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
 try:
     hdu.writeto(output, overwrite = True)
-    print(f'Image saved as {output}')
+    logger.info(f"Image saved as {output}")
 except Exception as e:
-    print(f"Error saving FITS file {output}: {e}")
+    logger.error(f"Error saving FITS file {output}: {e}")
 os.chdir(dir_work)
 
 
+# Check the distribution of points
 os.chdir(dir_plots)
 c = checks(x, y, z, imsize, image, r)
 c.show_image(save = save)
@@ -225,3 +254,5 @@ if n_points < 10000:
     c.plot3d(save = save)
 c.show_dist(save = save)
 os.chdir(dir_work)
+
+logger.info("Source generation completed successfully.")
