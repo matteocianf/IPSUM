@@ -8,6 +8,22 @@
 
 import os
 import math
+import logging
+
+# Set up logging
+logger = logging.getLogger('my_logger')
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler('source_generator.log', 'w+')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)  # You can set the desired log level for console output
+console_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+logger.info("Starting losito_runner script...")
 
 dir_work = os.getcwd()
 dir_mss = os.path.join(dir_work, 'mss')
@@ -15,11 +31,16 @@ dir_mss_bkp = os.path.join(dir_work, 'mss-bkp')
 dir_parsets = os.path.join(dir_work, 'parsets')
 synthms_parset = os.path.join(dir_parsets, 'synthms.parset')
 
+logger.info(f"Working directory: {dir_work}")
+logger.info(f"MS directory: {dir_mss}")
+logger.info(f"Backup MS directory: {dir_mss_bkp}")
+logger.info(f"Parsets directory: {dir_parsets}")
+
 if not os.path.exists(dir_mss):
     os.mkdir(dir_mss)
-    print(f"Directory {dir_mss} non existent, created")
+    logger.info(f"Directory {dir_mss} created")
 else:
-    print(f"Directory {dir_mss} found")
+    logger.info(f"Directory {dir_mss} already exists")
 
 try:
     with open(synthms_parset, 'r') as file:
@@ -30,7 +51,7 @@ try:
                 key, value = line.split('=', 1)         # Splits on the first '='
                 variables[key.strip()] = value.strip()  # adds to the dictionary
 except FileNotFoundError:
-    print(f"Error: Parset file not found at {synthms_parset}")
+    logger.error(f"Parset file not found at {synthms_parset}")
     # Exit if parset file is missing
             
 # Parameters
@@ -51,26 +72,27 @@ dec = math.radians(dec)
 
 os.chdir(dir_mss)
 cmd = f'synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chanpersb} --tres {tres} --start {start}'
-print(cmd)
+logger.info(f"Running command: {cmd}")
 os.system(cmd)
 
 if not os.path.exists(dir_mss):
     copy_cmd = f'cp -r {dir_mss} {dir_mss_bkp}'
     os.system(copy_cmd)
-    print(f"Backup directory {dir_mss_bkp} non existent, created")
+    logger.info(f"Backup directory {dir_mss_bkp} created")
 else:
-    print(f"Directory {dir_mss_bkp} found")
+    logger.info(f"Backup directory {dir_mss_bkp} already exists")
 
 losito_run = f'losito {dir_parsets}/losito.parset'
-print(losito_run)
+logger.info(f"Running losito with command: {losito_run}")
 os.system(losito_run)
 
 single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco'
-print(single_ms)
+logger.info(f"Running DP3 with command: {single_ms}")
 os.system(single_ms)
 
 freq_avg = f'DP3 {dir_parsets}/dp3_freqavg.parset'
-print(freq_avg)
+logger.info(f"Running DP3 frequency averaging with command: {freq_avg}")
 os.system(freq_avg)
 
 os.chdir(dir_work)
+logger.info("losito_runner script completed successfully.")
