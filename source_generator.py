@@ -13,9 +13,17 @@ import matplotlib.pyplot as plt
 
 
 # Set up logging
-logging.basicConfig(filename='source_generator.log', filemode='w', level=logging.INFO, format='%(asctime)s %(message)s')
-
-
+logger = logging.getLogger('my_logger')
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler('source_generator.log', 'w+')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)  # You can set the desired log level for console output
+console_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
 
 #########################
 # Functions and classes #
@@ -24,9 +32,9 @@ logging.basicConfig(filename='source_generator.log', filemode='w', level=logging
 def directory(directory):
    if not os.path.exists(directory):
     os.mkdir(directory)
-    logging.info(f"Directory {directory} created")
+    logger.info(f"Directory {directory} created")
    else:
-    logging.info(f"Directory {directory} already exists")
+    logger.info(f"Directory {directory} already exists")
 
 
 
@@ -167,6 +175,9 @@ class run:
 #    Main script    #
 #####################
 
+logger.info("Starting source generation...")
+
+# Set up directories
 dir_work = os.getcwd()
 dir_plots = os.path.join(dir_work, 'plots')
 dir_img = os.path.join(dir_work, 'img')
@@ -175,10 +186,10 @@ dir_parsets = os.path.join(dir_work, 'parsets')
 directory(dir_plots)  # create directory for plots
 directory(dir_img)    # create directory for images
 
-logging.info(f"Working directory: {dir_work}")
-logging.info(f"Image directory: {dir_img}")
-logging.info(f"Parset directory: {dir_parsets}")
-logging.info(f"Plots directory: {dir_plots}")
+logger.info(f"Working directory: {dir_work}")
+logger.info(f"Image directory: {dir_img}")
+logger.info(f"Parset directory: {dir_parsets}")
+logger.info(f"Plots directory: {dir_plots}")
 
 parset = os.path.join(dir_parsets, 'intact.parset')
 variables = {}
@@ -192,7 +203,7 @@ try:
                 key, value = line.split('=', 1)        # Splits on the first '='
                 variables[key.strip()] = value.strip() # adds to the dictionary
 except FileNotFoundError:
-    logging.error(f"Parset file not found at {parset}")# Exit if parset file is missing
+    logger.error(f"Parset file not found at {parset}")# Exit if parset file is missing
             
 # Parameters
 # REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
@@ -212,16 +223,16 @@ try:
         header = hdul[0].header
         pixsize = abs(header['CDELT1']) * 3600  # from deg to arcsec
 except FileNotFoundError:
-    logging.error(f"Input FITS file not found at {filename}")
+    logger.error(f"Input FITS file not found at {filename}")
 except KeyError:
-    logging.error(f"CDELT1 not found in FITS header of {filename}")
+    logger.error(f"CDELT1 not found in FITS header of {filename}")
 
 # Generate the sphere
 r = r / scale / pixsize                # Convert radius to pixels 
 sphere = run(n_points, r, imsize, flux_value)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
-logging.info(f"Total flux in the image: {fluxes*1e3} mJy")
+logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
 
 os.chdir(dir_img)
 output = f'{outname}-model.fits'
@@ -229,9 +240,9 @@ hdu = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
 try:
     hdu.writeto(output, overwrite = True)
-    logging.info(f"Image saved as {output}")
+    logger.info(f"Image saved as {output}")
 except Exception as e:
-    logging.error(f"Error saving FITS file {output}: {e}")
+    logger.error(f"Error saving FITS file {output}: {e}")
 os.chdir(dir_work)
 
 
@@ -243,3 +254,5 @@ if n_points < 10000:
     c.plot3d(save = save)
 c.show_dist(save = save)
 os.chdir(dir_work)
+
+logger.info("Source generation completed successfully.")
