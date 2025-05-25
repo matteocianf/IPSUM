@@ -6,9 +6,15 @@
 ########################################
 
 import os
+import logging
 import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
+
+
+# Set up logging
+logging.basicConfig(filename='source_generator.log', filemode='w', level=logging.INFO, format='%(asctime)s %(message)s')
+
 
 
 #########################
@@ -17,10 +23,11 @@ import matplotlib.pyplot as plt
 
 def directory(directory):
    if not os.path.exists(directory):
-     os.mkdir(directory)
-     print(f"Directory {directory} created ")
+    os.mkdir(directory)
+    logging.info(f"Directory {directory} created")
    else:
-     print(f"Directory {directory} already existing")
+    logging.info(f"Directory {directory} already exists")
+
 
 
 class checks:
@@ -168,6 +175,11 @@ dir_parsets = os.path.join(dir_work, 'parsets')
 directory(dir_plots)  # create directory for plots
 directory(dir_img)    # create directory for images
 
+logging.info(f"Working directory: {dir_work}")
+logging.info(f"Image directory: {dir_img}")
+logging.info(f"Parset directory: {dir_parsets}")
+logging.info(f"Plots directory: {dir_plots}")
+
 parset = os.path.join(dir_parsets, 'intact.parset')
 variables = {}
 try:
@@ -180,7 +192,7 @@ try:
                 key, value = line.split('=', 1)        # Splits on the first '='
                 variables[key.strip()] = value.strip() # adds to the dictionary
 except FileNotFoundError:
-    print(f"Error: Parset file not found at {parset}") # Exit if parset file is missing
+    logging.error(f"Parset file not found at {parset}")# Exit if parset file is missing
             
 # Parameters
 # REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
@@ -200,16 +212,16 @@ try:
         header = hdul[0].header
         pixsize = abs(header['CDELT1']) * 3600  # from deg to arcsec
 except FileNotFoundError:
-    print(f"Error: Input FITS file not found at {filename}")
+    logging.error(f"Input FITS file not found at {filename}")
 except KeyError:
-    print(f"Error: CDELT1 not found in FITS header of {filename}")
+    logging.error(f"CDELT1 not found in FITS header of {filename}")
 
 # Generate the sphere
 r = r / scale / pixsize                # Convert radius to pixels 
 sphere = run(n_points, r, imsize, flux_value)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
-print(f'Total flux: {fluxes*1e3} mJy')
+logging.info(f"Total flux in the image: {fluxes*1e3} mJy")
 
 os.chdir(dir_img)
 output = f'{outname}-model.fits'
@@ -217,9 +229,9 @@ hdu = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
 try:
     hdu.writeto(output, overwrite = True)
-    print(f'Image saved as {output}')
+    logging.info(f"Image saved as {output}")
 except Exception as e:
-    print(f"Error saving FITS file {output}: {e}")
+    logging.error(f"Error saving FITS file {output}: {e}")
 os.chdir(dir_work)
 
 
