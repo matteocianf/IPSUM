@@ -118,16 +118,21 @@ class checks:
 
 
 class run:
-    def __init__(self, n_points, r, imsize, flux_value):
+    def __init__(self, n_points, r, I0, re, imsize, flux_value):
         self.n_points = n_points
         self.r = r
+        self.I0 = I0
+        self.re = re
         self.imsize = imsize
         self.flux_value = flux_value
         self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
         
     def __call__(self):
         x, y, z = self.generate_uniform_sphere()
+        logger.info(f"Generated {self.n_points} points in a sphere of radius {self.r} pixels.")
         image = self.generate_image(x, y)
+        logger.info(f'Projected {self.n_points} points onto a 2D image of size {self.imsize}x{self.imsize} pixels.')
+        logger.info(f'Flux value for each point: {self.flux_value} Jy.')
         return x, y, z, image
     
     def generate_uniform_sphere(self):
@@ -142,6 +147,17 @@ class run:
         y = rho * np.sin(theta) * np.sin(phi)
         z = rho * np.cos(theta)
         return x, y, z
+    
+    def generate_exponential(self, pixsize):
+        '''
+        Generates a continuum distribution following a 2D exponential profile
+        '''
+        X = np.linspace(0, self.imsize, self.imsize)
+        x, y = np.meshgrid(X, X)
+        radius = np.sqrt((x - self.center[1])**2 + (y - self.center[0])**2)
+        I = self.I0 * np.exp(-radius/self.re)
+        logger.info(f'Generated an exponential profile with I0 = {self.I0} Jy/arcsec^2 and re = {self.re} pixels.')
+        return I
 
     def generate_image(self, x, y):
         '''
@@ -210,6 +226,8 @@ except FileNotFoundError:
 name = variables['name']
 n_points = int(variables['npoints'])   # Number of points to generate
 r = float(variables['r'])              # Radius of the sphere in kpc
+I0 = float(variables['I0']) * 1e-6     # Central brightness in uJy/arcsec^2
+re = float(variables['re'])            # Effective radius in kpc
 imsize = int(variables['imsize'])      # Image size in pixels
 flux_value = float(variables['flux'])  # Flux value in Jy
 scale = float(variables['scale'])      # Conversion scale in kpc/"
@@ -227,12 +245,17 @@ except FileNotFoundError:
 except KeyError:
     logger.error(f"CDELT1 not found in FITS header of {filename}")
 
+
 # Generate the sphere
-r = r / scale / pixsize                # Convert radius to pixels 
-sphere = run(n_points, r, imsize, flux_value)
+r = r / scale / pixsize                   # Convert radius to pixels 
+re = re / scale / pixsize                 # Effective radius in pixels
+sphere = run(n_points, r, I0, re, imsize, flux_value)
 x, y, z, image = sphere()
-fluxes = sphere.flux_calc(image)       # Estimate the total flux in the image
+fluxes = sphere.flux_calc(image)          # Estimate the total flux in the image
 logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
+
+I = sphere.generate_exponential(pixsize)  # Generate the exponential profile
+
 
 os.chdir(dir_img)
 output = f'{outname}-model.fits'
