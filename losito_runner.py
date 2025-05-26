@@ -7,6 +7,7 @@
 
 
 import os
+import re
 import math
 import logging
 
@@ -66,6 +67,7 @@ tres = float(variables['tres'])                  # time resolution in seconds
 start = float(variables['start']) * 3600 * 24    # start time in MJD
 ra = float(variables['ra'])                      # RA in degrees
 dec = float(variables['dec'])                    # DEC in degrees
+remove_SB = variables['remove_last_SB']          # remove last subband
 
 ra = math.radians(ra)
 dec = math.radians(dec)
@@ -85,6 +87,20 @@ else:
 losito_run = f'losito {dir_parsets}/losito.parset >log_losito.txt'
 logger.info(f"Running losito with command: {losito_run}")
 os.system(losito_run)
+
+if remove_SB:
+    num = []
+    for file in os.listdir(dir_mss):
+        if file.endswith('.MS'):
+            match = re.search(r'\d+', file)
+            if match:
+                num.append(int(match.group()))
+            else:
+                logger.warning(f"No number found in file name: {file}")
+    last_sb = max(num) if num else None
+    remove_last_SB = f'rm -r *{last_sb}.MS'
+    logger.info(f"Removing last subband with command: {remove_last_SB}")
+    os.system(remove_last_SB)
 
 single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco steps=[] >log_dp3_unifier.txt'
 logger.info(f"Running DP3 with command: {single_ms}")
