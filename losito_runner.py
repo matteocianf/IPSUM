@@ -82,15 +82,15 @@ if not os.path.exists(dir_mss):
 else:
     logger.info(f"Backup directory {dir_mss_bkp} already exists")
 
-losito_run = f'losito {dir_parsets}/losito.parset'
+losito_run = f'losito {dir_parsets}/losito.parset >log_losito.txt'
 logger.info(f"Running losito with command: {losito_run}")
 os.system(losito_run)
 
-single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco'
+single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco steps=[] >log_dp3_unifier.txt'
 logger.info(f"Running DP3 with command: {single_ms}")
 os.system(single_ms)
 
-freq_avg = f'DP3 {dir_parsets}/dp3_freqavg.parset'
+freq_avg = f'DP3 {dir_parsets}/dp3_freqavg.parset >log_dp3_freqavg.txt'
 logger.info(f"Running DP3 frequency averaging with command: {freq_avg}")
 os.system(freq_avg)
 
