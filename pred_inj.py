@@ -39,6 +39,8 @@ except FileNotFoundError:
 
 model_name = variables['model_name']
 mss_name = variables['mssname']
+outcolumn = variables['outcolumn']
+data_column = variables['data_column']
 
 logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
 predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
@@ -49,7 +51,6 @@ logger.info("Visibilities prediction command executed.")
 
 
 mslist = [os.path.join(dir_mss, mss_name)]
-outcolumn = "inj"
 logger.info(f"Adding column '{outcolumn}' to MS: {mss_name}")
 for i in range(len(mslist)):
     cmd = f'DP3 msin={mslist[i]} + msout=. steps=[] msout.datacolumn={outcolumn} \
@@ -75,8 +76,8 @@ for ms in mslist:
     else:
         for row in range(0, ts.nrows(), stepsize):
             print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-            data  = ts.getcol('DATA', startrow=row, nrow=stepsize, rowincr=1)
+            data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
             model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-            ts.putcol(outcolumn, data+model, startrow=row, nrow=stepsize, rowincr=1)
+            ts.putcol(outcolumn, data_column+model, startrow=row, nrow=stepsize, rowincr=1)
     ts.close()
 logger.info("Model prediction and injection completed successfully.")
