@@ -78,6 +78,6 @@ for ms in mslist:
             print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
             data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
             model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-            ts.putcol(outcolumn, data_column+model, startrow=row, nrow=stepsize, rowincr=1)
+            ts.putcol(outcolumn, data+model, startrow=row, nrow=stepsize, rowincr=1)
     ts.close()
 logger.info("Model prediction and injection completed successfully.")
