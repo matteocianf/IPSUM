@@ -16,6 +16,7 @@ The parameters are inputted via a file called `intact.parset`, there is an examp
 To create the empty MS file you have to run `lositosynthms_runner.py` and change the parameters in the `synthms.parset`, or, if you want you can run synthms as command line from the terminal after installing it.
 Remember to put the MS file in the `/mss` folder.
 The script now can produce also a 2D exponential profile to simulate a radio halo.
+All the parset files are located in the direcotry `parsets`, copy it into your working directory or the program won't work.
 
 ## Output
 
@@ -41,7 +42,10 @@ The settings for `intact.parset` are:
 + `save`, option to save the plots;
 + `name`, name of the fits file to open (the one from which you take the header - or the one in which you inject this model);
 + `scale`, scale in kpc/" for the object to simulate, this depends on the redshift;
-+ `output`, name of the output model.
++ `output`, name of the output model;
++ `I0`, central brightness of the exponential profile;
++ `re`, effective radius of the exponential;
++ `save_exp`, to save as a `fits` image the exponential image.
 
 For `synthms.parset` the settings are:
 
@@ -52,4 +56,7 @@ For `synthms.parset` the settings are:
 + `maxfreq`, highest frequency of the observation in MHz (the code will convert in Hz);
 + `lofarversion`, `1` for current version of LOFAR, `2` for the upgraded one;
 + `ra`, RA of the target in deg (the code will convert in rad);
-+ `dec`, Dec of the target in deg (the code will convert in rad).
++ `dec`, Dec of the target in deg (the code will convert in rad);
++ `chanpersb`, number of channels per sub-band;
++ `tres`, integration time, or time resolution of the MS, in seconds;
++ `start`, start time of the observation in MJD.
