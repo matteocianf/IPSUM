@@ -41,7 +41,7 @@ model_name = variables['model_name']
 mss_name = variables['mssname']
 
 logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
-predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \n \
+predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
                 >log_predict.txt'
 logger.info(f"Command to predict visibilities: {predict_cmd}")
 os.system(predict_cmd)
