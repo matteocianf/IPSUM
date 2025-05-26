@@ -52,11 +52,18 @@ logger.info("Visibilities prediction command executed.")
 
 mslist = [os.path.join(dir_mss, mss_name)]
 logger.info(f"Adding column '{outcolumn}' to MS: {mss_name}")
-for i in range(len(mslist)):
-    cmd = f'DP3 msin={mslist[i]} + msout=. steps=[] msout.datacolumn={outcolumn} \
-            msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
-    logger.info(f"Command to add column: {cmd}")
-    os.system(cmd)
+for ms in mslist:
+    ts  = pt.table(ms, readonly=False)
+    colnames = ts.colnames()
+    if outcolumn in colnames:
+        logger.info(f"Column '{outcolumn}' already exists in MS: {mss_name}")
+        continue
+    else:
+        logger.info(f"Adding column '{outcolumn}' to MS: {mss_name}")
+        cmd = f'DP3 msin={ms} + msout=. steps=[] msout.datacolumn={outcolumn} \
+                msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
+        logger.info(f"Command to add column: {cmd}")
+        os.system(cmd)
 logger.info(f"Column '{outcolumn}' added to MS: {mss_name}")
 
 logger.info("Starting model injection into MS...")
