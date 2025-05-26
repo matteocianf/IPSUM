@@ -39,13 +39,14 @@ def directory(directory):
 
 
 class checks:
-    def __init__(self, x, y, z, imsize, image, r, **kwargs):
+    def __init__(self, x, y, z, imsize, image, r, exp, **kwargs):
         self.x = x
         self.y = y
         self.z = z
         self.imsize = imsize
         self.image = image
         self.r = r
+        self.exp = exp
         self.__dict__.update(kwargs)
 
     def show_image(self, cmap = 'Blues', save = False):
@@ -115,7 +116,39 @@ class checks:
         if save:
             plt.savefig('sphere_density_2d.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
-
+        
+    def exp2d_image(self, cmap = 'cubehelix', save = False):
+        '''
+        Shows the 2D exponential profile
+        '''
+        fig = plt.figure(figsize = (8, 8))
+        ax = fig.add_subplot(111)
+        ax.tick_params('both', labelsize = 12)
+        ax.set_xlabel('x [px]', fontsize = 16)
+        ax.set_ylabel('y [px]', fontsize = 16)
+        im = ax.imshow(self.exp, cmap = cmap, origin = 'lower', norm = 'log', vmin = 1e-8, vmax = 5e-5)
+        clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
+        clb.set_label(label = 'Flux [Jy]', size = 18)
+        clb.ax.tick_params(labelsize = 12)
+        if save:
+            plt.savefig('exponential_profile.png', dpi = 300, bbox_inches = 'tight')
+        plt.close()
+        
+    def sources_and_exp(self, cmap = 'cubehelix', save = False):
+        '''
+        Shows the 2D image with the sources and the exponential profile
+        '''
+        fig, ax = plt.subplots(figsize = (8, 8))
+        ax.tick_params('both', labelsize = 12)
+        ax.set_xlabel('x [px]', fontsize = 16)
+        ax.set_ylabel('y [px]', fontsize = 16)
+        im = ax.imshow(self.image + self.exp, cmap = 'cubehelix', origin = 'lower', norm = 'log', vmin = 1e-8, vmax = 5e-5)
+        clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
+        clb.set_label(label = 'Flux [Jy]', size = 18)
+        clb.ax.tick_params(labelsize = 12)
+        if save:
+            plt.savefig('sources_and_exp.png', dpi = 300, bbox_inches = 'tight')
+        plt.close()
 
 class run:
     def __init__(self, n_points, r, I0, re, imsize, flux_value):
@@ -271,11 +304,13 @@ os.chdir(dir_work)
 
 # Check the distribution of points
 os.chdir(dir_plots)
-c = checks(x, y, z, imsize, image, r)
+c = checks(x, y, z, imsize, image, r, exp2d)
 c.show_image(save = save)
 if n_points < 10000:
     c.plot3d(save = save)
 c.show_dist(save = save)
+c.exp2d_image(save = save)
+c.sources_and_exp(save = save)  # Show the sources and the exponential profile
 os.chdir(dir_work)
 
 
