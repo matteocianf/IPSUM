@@ -15,6 +15,7 @@ This pipeline works by generating an empty LOFAR image with only noise in it usi
 The parameters are inputted via a file called `intact.parset`, there is an example file in the repo. It is important to notice that the imsize for the model must be the same as the input model imaged after the LoSiTo run.
 To create the empty MS file you have to run `lositosynthms_runner.py` and change the parameters in the `synthms.parset`, or, if you want you can run synthms as command line from the terminal after installing it.
 Remember to put the MS file in the `/mss` folder.
+The script now can produce also a 2D exponential profile to simulate a radio halo.
 
 ## Output
 
@@ -24,6 +25,8 @@ Some examples of the plots are shown below.
 ![2D projection of the 3D uniform distribution of points in the sphere.](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_projection.png)
 ![3D distribution of points inside the sphere](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_3d.png)
 ![Histogram of the density of points in function of the radius of the sphere](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_density_2d.png)
+![2D exponential](https://github.com/matteocianf/INTACT/blob/main/examples/exponential_profile.png)
+![2D exponential with point sources superimposed](https://github.com/matteocianf/INTACT/blob/main/examples/sources_and_exp.png)
 
 ## Parsets
 
