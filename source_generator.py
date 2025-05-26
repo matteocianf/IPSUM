@@ -232,6 +232,7 @@ imsize = int(variables['imsize'])      # Image size in pixels
 flux_value = float(variables['flux'])  # Flux value in Jy
 scale = float(variables['scale'])      # Conversion scale in kpc/"
 save = bool(variables['save'])
+save_exp = bool(variables['save_exp'])
 outname = variables['output']
 
 # opens the fits file to get the header and pixsize
@@ -253,8 +254,7 @@ sphere = run(n_points, r, I0, re, imsize, flux_value)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)          # Estimate the total flux in the image
 logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
-
-I = sphere.generate_exponential(pixsize)  # Generate the exponential profile
+exp2d = sphere.generate_exponential(pixsize)  # Generate the exponential profile
 
 
 os.chdir(dir_img)
@@ -277,5 +277,18 @@ if n_points < 10000:
     c.plot3d(save = save)
 c.show_dist(save = save)
 os.chdir(dir_work)
+
+
+# Save the exponential profile if required
+os.chdir(dir_img)
+if save_exp:
+    output_exp = f'exponential-model.fits'
+    hdu_exp = fits.PrimaryHDU(exp2d, header)
+    try:
+        hdu_exp.writeto(output_exp, overwrite = True)
+        logger.info(f"Exponential profile saved as {output_exp}")
+    except Exception as e:
+        logger.error(f"Error saving FITS file {output_exp}: {e}")
+os.chdir(dir_work)        
 
 logger.info("Source generation completed successfully.")

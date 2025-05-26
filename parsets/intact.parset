@@ -8,3 +8,4 @@ scale = 3.65
 output = test_model
 I0 = 9
 re = 330
+save_exp = True
