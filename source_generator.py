@@ -217,7 +217,7 @@ class checks:
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel('x [px]', fontsize = 16)
         ax.set_ylabel('y [px]', fontsize = 16)
-        im = ax.imshow(self.image + self.exp, cmap = 'cubehelix', origin = 'lower', norm = 'log', vmin = 1e-7, vmax = 1e-3)
+        im = ax.imshow(self.image + self.exp, cmap = cmap, origin = 'lower', norm = 'log', vmin = 1e-7, vmax = 1e-3)
         clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
         clb.set_label(label = 'Flux [Jy]', size = 18)
         clb.ax.tick_params(labelsize = 12)
@@ -310,19 +310,6 @@ except Exception as e:
     logger.error(f"Error saving FITS file {output}: {e}")
 os.chdir(dir_work)
 
-
-# Check the distribution of points
-os.chdir(dir_plots)
-c = checks(x, y, z, imsize, image, r, exp2d)
-c.show_image(save = save)
-if n_points < 10000:
-    c.plot3d(save = save)
-c.show_dist(save = save)
-c.exp2d_image(save = save)
-c.sources_and_exp(save = save)  # Show the sources and the exponential profile
-os.chdir(dir_work)
-
-
 # Save the exponential profile if required
 os.chdir(dir_img)
 if save_exp:
@@ -333,6 +320,17 @@ if save_exp:
         logger.info(f"Exponential profile saved as {output_exp}")
     except Exception as e:
         logger.error(f"Error saving FITS file {output_exp}: {e}")
-os.chdir(dir_work)        
+os.chdir(dir_work) 
+
+# Check the distribution of points
+os.chdir(dir_plots)
+c = checks(x, y, z, imsize, image, r, exp2d)
+c.show_image(save = save)
+if n_points < 10000:
+    c.plot3d(save = save)
+c.show_dist(save = save)
+c.exp2d_image(save = save)
+c.sources_and_exp(save = save)  # Show the sources and the exponential profile
+os.chdir(dir_work)       
 
 logger.info("Source generation completed successfully.")

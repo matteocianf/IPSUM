@@ -8,7 +8,7 @@ import casacore.tables as pt
 logger = logging.getLogger('my_logger')
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler = logging.FileHandler('source_generator.log', 'w+')
+file_handler = logging.FileHandler('pred_inj.log', 'w+')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 console_handler = logging.StreamHandler()
@@ -58,7 +58,7 @@ for col in cols:
                     msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
             logger.info(f"Command to add column: {cmd}")
             os.system(cmd)
-    logger.info(f"Column '{col}' added to MS: {mss_name}")    
+            logger.info(f"Column '{col}' added to MS: {mss_name}")    
         
 for col in cols:
     model_name = models[0] if col == 'inj' else models[1]
