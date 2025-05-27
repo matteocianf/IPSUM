@@ -41,6 +41,9 @@ mss_name = variables['mssname']
 mslist = [os.path.join(dir_mss, mss_name)]
 
 cols = ['inj', 'inj_exp']
+models = ['inj_sources', 'exponential']
+
+
 for col in cols:
     logger.info(f"Adding column '{col}' to MS: {mss_name}")
     for ms in mslist:
@@ -56,9 +59,7 @@ for col in cols:
             logger.info(f"Command to add column: {cmd}")
             os.system(cmd)
     logger.info(f"Column '{col}' added to MS: {mss_name}")    
-    
-    
-models = ['inj_sources', 'exponential']
+        
 for col in cols:
     model_name = models[0] if col == 'inj' else models[1]
     logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")

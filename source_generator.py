@@ -37,6 +37,83 @@ def directory(directory):
     logger.info(f"Directory {directory} already exists")
 
 
+class run:
+    def __init__(self, n_points, r, I0, re, imsize, flux_value):
+        self.n_points = n_points
+        self.r = r
+        self.I0 = I0
+        self.re = re
+        self.imsize = imsize
+        self.flux_value = flux_value
+        self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
+        
+    def __call__(self):
+        x, y, z = self.generate_uniform_sphere()
+        logger.info(f"Generated {self.n_points} points in a sphere of radius {self.r:.1f} pixels.")
+        image = self.generate_image(x, y)
+        logger.info(f'Projected {self.n_points} points onto a 2D image of size {self.imsize}x{self.imsize} pixels.')
+        logger.info(f'Flux value for each point: {self.flux_value} Jy.')
+        return x, y, z, image
+    
+    def generate_uniform_sphere(self):
+        ''' 
+        Generates a uniform distribution of points in the volume of a sphere
+        '''
+        theta = np.arccos(2 * np.random.uniform(0, 1, self.n_points) - 1)
+        phi = 2 * np.pi * np.random.uniform(0, 1, self.n_points)
+        rho = self.r * np.cbrt(np.random.uniform(0, 1, self.n_points))  # Scale to the radius of the sphere
+        # Convert spherical coordinates to Cartesian coordinates
+        x = rho * np.sin(theta) * np.cos(phi)
+        y = rho * np.sin(theta) * np.sin(phi)
+        z = rho * np.cos(theta)
+        return x, y, z
+    
+    def generate_exponential(self, pixsize):
+        '''
+        Generates a continuum distribution following a 2D exponential profile
+        '''
+        X = np.linspace(0, self.imsize, self.imsize)
+        x, y = np.meshgrid(X, X)
+        radius = np.sqrt((x - self.center[1])**2 + (y - self.center[0])**2)
+        I = self.I0 * np.exp(-radius/self.re)
+        logger.info(f'Generated an exponential profile with I0 = {self.I0/pixsize**2} uJy/arcsec^2 and re = {self.re:.1f} pixels.')
+        return I
+
+    def generate_image(self, x, y):
+        '''
+        Generates a 2D image from the 3D points projected onto a 2D plane
+        '''
+        image = np.zeros((self.imsize, self.imsize))
+        # Convert the 2D coordinates to pixel indices
+        x_pixel = (x + self.center[0]).astype(int)
+        y_pixel = (y + self.center[1]).astype(int)
+        valid_mask = (x_pixel >= 0) & (x_pixel < self.imsize) & \
+                     (y_pixel >= 0) & (y_pixel < self.imsize)
+        # Filter the coordinates
+        x_pixel_valid = x_pixel[valid_mask]
+        y_pixel_valid = y_pixel[valid_mask]
+        # Add flux to the image at valid pixel locations.
+        # np.add.at handles cases where multiple points map to the same pixel by summing.
+        np.add.at(image, (y_pixel_valid, x_pixel_valid), self.flux_value)
+        return image
+        
+    def flux_calc(self, image):
+        '''
+        Computes the total flux in the image
+        '''
+        total_flux = np.sum(image)
+        return total_flux
+    
+    def flux_exp(self, f = 0.8):
+        '''
+        Computes the flux of the exponential profile up to 3re (f = 0.8)
+        I0 in Jy/arcsec^2, re in arcsec
+        '''
+        re = self.re * pixsize  # Convert re to arcsec
+        I0 = self.I0            # Central brightness in Jy/arcsec^2
+        flux = 2 * np.pi * I0/pixsize**2 * re**2 * f
+        return flux
+        
 
 class checks:
     def __init__(self, x, y, z, imsize, image, r, exp, **kwargs):
@@ -93,17 +170,15 @@ class checks:
         '''
         distances = np.hypot(self.x, self.y)        # distances from the center
         counts, bin_edges = np.histogram(distances, bins = bins, range = (0, self.r))
-
         # Calculate the area of each circular shell in 2D
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
         shell_areas = np.pi * (bin_edges[1:]**2 - bin_edges[:-1]**2)
         # Calculate the density of points in each bin
         densities = counts / shell_areas
-
         theoretical_densities = np.sqrt(self.r**2 - bin_centers**2)
         theoretical_densities /= np.mean(theoretical_densities)      # Normalize to the same scale
         theoretical_densities *= np.mean(densities)                  # Scale to match the observed densities            
-
+        # Plot the histogram
         fig = plt.figure(figsize = (8, 8))
         ax = fig.add_subplot(111)
         ax.tick_params('both', labelsize = 12)
@@ -149,86 +224,6 @@ class checks:
         if save:
             plt.savefig('sources_and_exp.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
-
-
-class run:
-    def __init__(self, n_points, r, I0, re, imsize, flux_value):
-        self.n_points = n_points
-        self.r = r
-        self.I0 = I0
-        self.re = re
-        self.imsize = imsize
-        self.flux_value = flux_value
-        self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
-        
-    def __call__(self):
-        x, y, z = self.generate_uniform_sphere()
-        logger.info(f"Generated {self.n_points} points in a sphere of radius {self.r:.1f} pixels.")
-        image = self.generate_image(x, y)
-        logger.info(f'Projected {self.n_points} points onto a 2D image of size {self.imsize}x{self.imsize} pixels.')
-        logger.info(f'Flux value for each point: {self.flux_value} Jy.')
-        return x, y, z, image
-    
-    def generate_uniform_sphere(self):
-        ''' 
-        Generates a uniform distribution of points in the volume of a sphere
-        '''
-        theta = np.arccos(2 * np.random.uniform(0, 1, self.n_points) - 1)
-        phi = 2 * np.pi * np.random.uniform(0, 1, self.n_points)
-        rho = self.r * np.cbrt(np.random.uniform(0, 1, self.n_points))  # Scale to the radius of the sphere
-        # Convert spherical coordinates to Cartesian coordinates
-        x = rho * np.sin(theta) * np.cos(phi)
-        y = rho * np.sin(theta) * np.sin(phi)
-        z = rho * np.cos(theta)
-        return x, y, z
-    
-    def generate_exponential(self, pixsize):
-        '''
-        Generates a continuum distribution following a 2D exponential profile
-        '''
-        X = np.linspace(0, self.imsize, self.imsize)
-        x, y = np.meshgrid(X, X)
-        radius = np.sqrt((x - self.center[1])**2 + (y - self.center[0])**2)
-        I = self.I0 * np.exp(-radius/self.re)
-        logger.info(f'Generated an exponential profile with I0 = {self.I0/pixsize**2} uJy/arcsec^2 and re = {self.re:.1f} pixels.')
-        return I
-
-    def generate_image(self, x, y):
-        '''
-        Generates a 2D image from the 3D points projected onto a 2D plane
-        '''
-        image = np.zeros((self.imsize, self.imsize))
-        # Convert the 2D coordinates to pixel indices
-        x_pixel = (x + self.center[0]).astype(int)
-        y_pixel = (y + self.center[1]).astype(int)
-        valid_mask = (x_pixel >= 0) & (x_pixel < self.imsize) & \
-                     (y_pixel >= 0) & (y_pixel < self.imsize)
-          
-        # Filter the coordinates
-        x_pixel_valid = x_pixel[valid_mask]
-        y_pixel_valid = y_pixel[valid_mask]
-        
-        # Add flux to the image at valid pixel locations.
-        # np.add.at handles cases where multiple points map to the same pixel by summing.
-        np.add.at(image, (y_pixel_valid, x_pixel_valid), self.flux_value)
-        return image
-        
-    def flux_calc(self, image):
-        '''
-        Computes the total flux in the image
-        '''
-        total_flux = np.sum(image)
-        return total_flux
-    
-    def flux_exp(self, f = 0.8):
-        '''
-        Computes the flux of the exponential profile up to 3re (f = 0.8)
-        I0 in Jy/arcsec^2, re in arcsec
-        '''
-        re = self.re * pixsize  # Convert re to arcsec
-        I0 = self.I0            # Central brightness in Jy/arcsec^2
-        flux = 2 * np.pi * I0/pixsize**2 * re**2 * f
-        return flux
         
 
 #####################
