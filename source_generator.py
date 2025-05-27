@@ -298,7 +298,7 @@ I0 = I0 * pixsize**2                      # Convert I0 to Jy/pixel for the model
 sphere = run(n_points, r, I0, re, imsize, flux_value)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)          # Estimate the total flux in the image
-logger.info(f"Total flux in the image: {fluxes*1e3:.0f} mJy")
+logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
 
 exp2d = sphere.generate_exponential(pixsize)  # Generate the exponential profile
 flux_exp = sphere.flux_exp()                  # Estimate the flux of the exponential profile
