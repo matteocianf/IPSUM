@@ -38,7 +38,11 @@ except FileNotFoundError:
     # Exit if parset file is missing
 
 mss_name = variables['mssname']
-mslist = [os.path.join(dir_mss, mss_name)]
+# mslist = [os.path.join(dir_mss, mss_name)]
+ms = os.path.join(dir_mss, mss_name)
+ts  = pt.table(ms, readonly=False)
+colnames = ts.colnames()
+
 
 cols = ['inj', 'inj_exp']
 models = ['inj_sources', 'exponential']
@@ -46,20 +50,17 @@ models = ['inj_sources', 'exponential']
 
 for col in cols:
     logger.info(f"Adding column '{col}' to MS: {mss_name}")
-    for ms in mslist:
-        ts  = pt.table(ms, readonly=False)
-        colnames = ts.colnames()
-        if col in colnames:
-            logger.info(f"Column '{col}' already exists in MS: {mss_name}")
-            continue
-        else:
-            logger.info(f"Adding column '{col}' to MS: {mss_name}")
-            cmd = f'DP3 msin={ms} + msout=. steps=[] msout.datacolumn={col} \
-                    msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
-            logger.info(f"Command to add column: {cmd}")
-            os.system(cmd)
-            logger.info(f"Column '{col}' added to MS: {mss_name}") 
-        ts.close()   
+    if col in colnames:
+        logger.info(f"Column '{col}' already exists in MS: {mss_name}")
+        continue
+    else:
+        logger.info(f"Adding column '{col}' to MS: {mss_name}")
+        cmd = f'DP3 msin={ms} + msout=. steps=[] msout.datacolumn={col} \
+                msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
+        logger.info(f"Command to add column: {cmd}")
+        os.system(cmd)
+        logger.info(f"Column '{col}' added to MS: {mss_name}") 
+        # ts.close()   
         
 for col in cols:
     model_name = models[0] if col == 'inj' else models[1]
@@ -73,13 +74,13 @@ for col in cols:
     logger.info("Starting model injection into MS...")
     stepsize = 10000
     data_column = 'DATA' if col == 'inj' else 'inj'
-    for ms in mslist:
-        ts  = pt.table(ms, readonly=False)
-        colnames = ts.colnames()
-        for row in range(0, ts.nrows(), stepsize):
-            print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-            data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
-            model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-            ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
-        ts.close()
-    logger.info("Model prediction and injection completed successfully.")
+    # for ms in mslist:
+    #     ts  = pt.table(ms, readonly=False)
+    #     colnames = ts.colnames()
+    for row in range(0, ts.nrows(), stepsize):
+        print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
+        data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+        model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+        ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
+ts.close()
+logger.info("Model prediction and injection completed successfully.")
