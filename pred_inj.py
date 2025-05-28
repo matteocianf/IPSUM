@@ -8,7 +8,7 @@ import casacore.tables as pt
 logger = logging.getLogger('my_logger')
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler = logging.FileHandler('source_generator.log', 'w+')
+file_handler = logging.FileHandler('pred_inj.log', 'w+')
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 console_handler = logging.StreamHandler()
@@ -37,54 +37,30 @@ except FileNotFoundError:
     logger.error(f"Parset file not found at {inj_parset}")
     # Exit if parset file is missing
 
-model_name = variables['model_name']
 mss_name = variables['mssname']
-outcolumn = variables['outcolumn']
-data_column = variables['data_column']
+ms = os.path.join(dir_mss, mss_name)
+cols = ['inj', 'inj_exp']
+models = ['inj_sources', 'exponential']
+        
 
-logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
-predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
-                >log_predict.txt'
-logger.info(f"Command to predict visibilities: {predict_cmd}")
-os.system(predict_cmd)
-logger.info("Visibilities prediction command executed.")
+for col in cols:
+    model_name = models[0] if col == 'inj' else models[1]
+    logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
+    predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
+                    >log_predict.txt'
+    logger.info(f"Command to predict visibilities: {predict_cmd}")
+    os.system(predict_cmd)
+    logger.info("Model predicted.")
 
-
-mslist = [os.path.join(dir_mss, mss_name)]
-logger.info(f"Adding column '{outcolumn}' to MS: {mss_name}")
-for ms in mslist:
+    logger.info("Starting model injection into MS...")
+    stepsize = 10000
+    data_column = 'DATA' if col == 'inj' else 'inj'
     ts  = pt.table(ms, readonly=False)
     colnames = ts.colnames()
-    if outcolumn in colnames:
-        logger.info(f"Column '{outcolumn}' already exists in MS: {mss_name}")
-        continue
-    else:
-        logger.info(f"Adding column '{outcolumn}' to MS: {mss_name}")
-        cmd = f'DP3 msin={ms} + msout=. steps=[] msout.datacolumn={outcolumn} \
-                msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
-        logger.info(f"Command to add column: {cmd}")
-        os.system(cmd)
-logger.info(f"Column '{outcolumn}' added to MS: {mss_name}")
-
-logger.info("Starting model injection into MS...")
-stepsize = 10000
-for ms in mslist:
-    ts  = pt.table(ms, readonly=False)
-    colnames = ts.colnames()
-    if 'CORRECTED_DATA' in colnames:
-        for row in range(0, ts.nrows(), stepsize):
-            print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-            print('Read CORRECTED_DATA column')
-            data  = ts.getcol('CORRECTED_DATA', startrow=row, nrow=stepsize, rowincr=1)
-            print('Reading MODEL column')
-            model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-            print('Subtraction...')
-            ts.putcol(outcolumn, data+model, startrow=row, nrow=stepsize, rowincr=1)
-    else:
-        for row in range(0, ts.nrows(), stepsize):
-            print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-            data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
-            model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-            ts.putcol(outcolumn, data+model, startrow=row, nrow=stepsize, rowincr=1)
+    for row in range(0, ts.nrows(), stepsize):
+        print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
+        data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+        model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+        ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
     ts.close()
 logger.info("Model prediction and injection completed successfully.")
