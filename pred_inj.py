@@ -42,8 +42,6 @@ mss_name = variables['mssname']
 ms = os.path.join(dir_mss, mss_name)
 ts  = pt.table(ms, readonly=False)
 colnames = ts.colnames()
-
-
 cols = ['inj', 'inj_exp']
 models = ['inj_sources', 'exponential']
 
@@ -60,8 +58,10 @@ for col in cols:
         logger.info(f"Command to add column: {cmd}")
         os.system(cmd)
         logger.info(f"Column '{col}' added to MS: {mss_name}") 
-        # ts.close()   
+ts.close()   
         
+ts  = pt.table(ms, readonly=False)
+colnames = ts.colnames()
 for col in cols:
     model_name = models[0] if col == 'inj' else models[1]
     logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
