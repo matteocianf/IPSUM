@@ -13,7 +13,7 @@ import logging
 import casacore.tables as pt
 
 # Set up logging
-logger = logging.getLogger('my_logger')
+logger = logging.getLogger('losito_runner')
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler = logging.FileHandler('source_generator.log', 'w+')
@@ -82,7 +82,6 @@ if only_add_col == True:
     colnames = ts.colnames()
     ts.close()   
     for col in cols:
-        logger.info(f"Adding column '{col}' to MS: {name}")
         if col in colnames:
             logger.info(f"Column '{col}' already exists in MS: {name}")
             continue
