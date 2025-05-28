@@ -58,7 +58,8 @@ for col in cols:
                     msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
             logger.info(f"Command to add column: {cmd}")
             os.system(cmd)
-            logger.info(f"Column '{col}' added to MS: {mss_name}")    
+            logger.info(f"Column '{col}' added to MS: {mss_name}") 
+        ts.close()   
         
 for col in cols:
     model_name = models[0] if col == 'inj' else models[1]
