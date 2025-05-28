@@ -106,6 +106,10 @@ single_ms = f'DP3 msin={name}*.MS msout={name}.MS msout.storagemanager=dysco ste
 logger.info(f"Running DP3 with command: {single_ms}")
 os.system(single_ms)
 
+single_ms_bkp = f'cp -r {name}.MS {dir_mss_bkp}/{name}.MS'
+logger.info(f"Backing up single MS with command: {single_ms_bkp}")
+os.system(single_ms_bkp)
+
 freq_avg = f'DP3 {dir_parsets}/dp3_freqavg.parset >log_dp3_freqavg.txt'
 logger.info(f"Running DP3 frequency averaging with command: {freq_avg}")
 os.system(freq_avg)
