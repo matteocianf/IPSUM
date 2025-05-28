@@ -80,6 +80,7 @@ if only_add_col == True:
     cols = ['inj', 'inj_exp']
     ts  = pt.table(ms, readonly=False)
     colnames = ts.colnames()
+    ts.close()   
     for col in cols:
         logger.info(f"Adding column '{col}' to MS: {name}")
         if col in colnames:
@@ -92,7 +93,6 @@ if only_add_col == True:
             logger.info(f"Command to add column: {cmd}")
             os.system(cmd)
             logger.info(f"Column '{col}' added to MS: {name}") 
-    ts.close()   
     
 else:
     logging.info("Starting synthesis and injection steps...")
