@@ -42,7 +42,8 @@ ms = os.path.join(dir_mss, mss_name)
 cols = ['inj', 'inj_exp']
 models = ['inj_sources', 'exponential']
         
-
+ts  = pt.table(ms, readonly=False)
+colnames = ts.colnames()
 for col in cols:
     model_name = models[0] if col == 'inj' else models[1]
     logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
@@ -55,12 +56,10 @@ for col in cols:
     logger.info("Starting model injection into MS...")
     stepsize = 10000
     data_column = 'DATA' if col == 'inj' else 'inj'
-    ts  = pt.table(ms, readonly=False)
-    colnames = ts.colnames()
     for row in range(0, ts.nrows(), stepsize):
         print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
         data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
         model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
         ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
-    ts.close()
+ts.close()
 logger.info("Model prediction and injection completed successfully.")
