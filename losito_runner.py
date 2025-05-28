@@ -75,6 +75,7 @@ ra = math.radians(ra)
 dec = math.radians(dec)
 
 if only_add_col == True:
+    logging.info("Only adding columns to existing MS, skipping synthesis and injection steps.")
     ms = os.path.join(dir_mss, name)
     cols = ['inj', 'inj_exp']
     ts  = pt.table(ms, readonly=False)
@@ -94,6 +95,7 @@ if only_add_col == True:
     ts.close()   
     
 else:
+    logging.info("Starting synthesis and injection steps...")
     os.chdir(dir_mss)
     cmd = f'synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} \
             --lofarversion {lofarversion} --ra {ra} --dec {dec} --chanpersb {chanpersb} --tres {tres} --start {start}'
