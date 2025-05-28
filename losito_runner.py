@@ -10,7 +10,7 @@ import os
 import re
 import math
 import logging
-import casacore as pt
+import casacore.tables as pt
 
 # Set up logging
 logger = logging.getLogger('my_logger')
