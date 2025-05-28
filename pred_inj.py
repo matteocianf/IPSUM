@@ -50,7 +50,7 @@ for col in cols:
     os.system(predict_cmd)
     logger.info("Model predicted.")
 
-    ts  = pt.table(ms, readonly=False)
+    ts = pt.table(ms, readonly=False)
     colnames = ts.colnames()
     logger.info("Starting model injection into MS...")
     stepsize = 10000
