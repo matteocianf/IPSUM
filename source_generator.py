@@ -263,17 +263,22 @@ except FileNotFoundError:
 # Parameters
 # REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
 name = variables['name']
-n_points = int(variables['npoints'])   # Number of points to generate
-r = float(variables['r'])              # Radius of the sphere in kpc
-I0 = float(variables['I0'])            # Central brightness in Jy/arcsec^2
-re = float(variables['re'])            # Effective radius in kpc
-imsize = int(variables['imsize'])      # Image size in pixels
-flux_value = float(variables['flux'])  # Flux value in Jy
-scale = float(variables['scale'])      # Conversion scale in kpc/"
+n_points = int(variables['npoints'])    # Number of points to generate
+r = float(variables['r'])               # Radius of the sphere in kpc
+I0 = float(variables['I0'])             # Central brightness in Jy/arcsec^2
+re = float(variables['re'])             # Effective radius in kpc
+imsize = int(variables['imsize'])       # Image size in pixels
+flux_value = float(variables['flux'])   # Flux value in Jy
+scale = float(variables['scale'])       # Conversion scale in kpc/"
+tot_flux = float(variables['tot_flux']) # Total flux in Jy
 save = bool(variables['save'])
 save_exp = bool(variables['save_exp'])
 outname = variables['output']
 
+if tot_flux != 0:
+    flux_value = tot_flux / n_points    # If total flux is specified, adjust flux value per point
+    logger.info(f"Total flux specified: {tot_flux} Jy. Adjusted flux value per point: {flux_value} Jy.")
+    
 # opens the fits file to get the header and pixsize
 filename = dir_img + '/' + name + '.fits'
 try:
