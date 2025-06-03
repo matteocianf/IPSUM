@@ -77,7 +77,7 @@ dec = math.radians(dec)
 if only_add_col == True:
     logging.info("Only adding columns to existing MS, skipping synthesis and injection steps.")
     ms = os.path.join(dir_mss, name)
-    cols = ['inj', 'inj_exp']
+    cols = ['inj', 'inj_exp', 'sub']
     ts  = pt.table(ms, readonly=False)
     colnames = ts.colnames()
     ts.close()   
