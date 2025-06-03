@@ -1,4 +1,2 @@
 mssname = A2219_synth.MS
-model_name = inj_model
-outcolumn = inj
-data_column = DATA
+name = A2219
