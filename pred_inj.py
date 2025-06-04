@@ -118,7 +118,7 @@ if not only_sub:
     logger.info(f"Making mask: {breizorro_shallow}")
     os.system(breizorro_shallow)
 
-    move_mask = f'mv *.mask.fits ../{dir_deep_img}/'
+    move_mask = f'mv *.mask.fits {dir_deep_img}/'
     logger.info(f"Moving mask to deep image directory: {move_mask}")
     os.system(move_mask)
 
@@ -141,7 +141,7 @@ if not only_sub:
     logger.info(f"Making mask: {breizorro_shallow}")
     os.system(breizorro_shallow)
 
-    move_mask = f'mv *.mask.fits ../{dir_exp_deep}/'
+    move_mask = f'mv *.mask.fits {dir_exp_deep}/'
     logger.info(f"Moving mask to deep image directory: {move_mask}")
     os.system(move_mask)
 
@@ -157,7 +157,7 @@ else:
 
 os.chdir(dir_sub_shallow)    
 img_sub_shallow = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
-                            datacol = 'inj_exp', name = name, scale = 6, niter = 15000, 
+                            datacol = 'inj_exp', name = '', scale = 6, niter = 15000, 
                             ms = ms, outname = 'highcut_shallow')
 logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
 os.system(img_sub_shallow)
@@ -166,13 +166,13 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r highcut_shallow-MFS-image.fits'
 logger.info(f"Making mask for shallow image: {breizorro_shallow}")
 os.system(breizorro_shallow)
-move_mask = f'mv *.mask.fits ../{dir_sub_deep}/'
+move_mask = f'mv *.mask.fits {dir_sub_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
 os.chdir(dir_sub_deep)
 img_sub_deep = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
-                           datacol = 'inj_exp', name = name, scale = 6, niter = 100000,
+                           datacol = 'inj_exp', name = '', scale = 6, niter = 100000,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
 os.system(img_sub_deep)
@@ -205,7 +205,7 @@ os.chdir(dir_sub_shallow)
 logger.info('Source subtracted shallow image...')
 
 shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = name, scale = 6, niter = 15000, 
+                        datacol = 'sub', name = '', scale = 6, niter = 15000, 
                         ms = ms, outname = name + '_sub_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
 os.system(shallow_cmd)
@@ -214,13 +214,13 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r {name}_sub_shallow-MFS-image.fits'
 logger.info(f"Making mask: {breizorro_shallow}")
 os.system(breizorro_shallow)
-move_mask = f'mv *.mask.fits ../{dir_sub_deep}/'
+move_mask = f'mv *.mask.fits {dir_sub_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
 os.chdir(dir_sub_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = name, scale = 6, niter = 100000,
+                        datacol = 'sub', name = '', scale = 6, niter = 100000,
                         outname = name + '_sub_deep', ms = ms, mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
