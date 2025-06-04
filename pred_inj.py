@@ -36,7 +36,7 @@ def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, out
             -scale {scale}arcsec -niter {niter} '
     if mask != '':
         if name != '':
-            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits '
+            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 2 '
         else:
             cmd += f'-fits-mask {mask}-MFS-image.mask.fits '
     cmd += f'{ms} >log.txt'
