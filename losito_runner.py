@@ -68,8 +68,8 @@ tres = float(variables['tres'])                  # time resolution in seconds
 start = float(variables['start']) * 3600 * 24    # start time in MJD
 ra = float(variables['ra'])                      # RA in degrees
 dec = float(variables['dec'])                    # DEC in degrees
-remove_SB = bool(variables['remove_last_SB'])    # remove last subband
-only_add_col = bool(variables['only_add_col'])   # only add columns to MS
+remove_SB = int(variables['remove_last_SB'])    # remove last subband
+only_add_col = int(variables['only_add_col'])   # only add columns to MS
 
 ra = math.radians(ra)
 dec = math.radians(dec)

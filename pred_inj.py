@@ -79,7 +79,7 @@ except FileNotFoundError:
 
 mss_name = variables['mssname']
 name = variables['name']
-only_sub = bool(variables['only_sub'])
+only_sub = int(variables['only_sub'])
 
 ms = os.path.join(dir_mss, mss_name)
 #### Imaging

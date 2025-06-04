@@ -9,5 +9,5 @@ dec = 46.7103
 chanpersb = 3
 tres = 4.00556032
 start = 57267
-remove_last_SB = True
-only_add_col = True
+remove_last_SB = 1
+only_add_col = 1

@@ -271,8 +271,8 @@ imsize = int(variables['imsize'])       # Image size in pixels
 flux_value = float(variables['flux'])   # Flux value in Jy
 scale = float(variables['scale'])       # Conversion scale in kpc/"
 tot_flux = float(variables['tot_flux']) # Total flux in Jy
-save = bool(variables['save'])
-save_exp = bool(variables['save_exp'])
+save = int(variables['save'])
+save_exp = int(variables['save_exp'])
 outname = variables['output']
 
 if tot_flux != 0:
