@@ -74,26 +74,8 @@ only_add_col = int(variables['only_add_col'])   # only add columns to MS
 ra = math.radians(ra)
 dec = math.radians(dec)
 
-if only_add_col == True:
-    logging.info("Only adding columns to existing MS, skipping synthesis and injection steps.")
-    ms = os.path.join(dir_mss, name)
-    cols = ['inj', 'inj_exp', 'sub']
-    ts  = pt.table(ms, readonly=False)
-    colnames = ts.colnames()
-    ts.close()   
-    for col in cols:
-        if col in colnames:
-            logger.info(f"Column '{col}' already exists in MS: {name}")
-            continue
-        else:
-            logger.info(f"Adding column '{col}' to MS: {name}")
-            cmd = f'DP3 msin={ms} msout=. steps=[] msout.datacolumn={col} \
-                    msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
-            logger.info(f"Command to add column: {cmd}")
-            os.system(cmd)
-            logger.info(f"Column '{col}' added to MS: {name}") 
     
-else:
+if not only_add_col:
     logging.info("Starting synthesis and injection steps...")
     os.chdir(dir_mss)
     cmd = f'synthms --name {name} --tobs {tobs} --station {station} --minfreq {minfreq*1e6} --maxfreq {maxfreq*1e6} \
@@ -137,24 +119,27 @@ else:
     freq_avg = f'DP3 {dir_parsets}/dp3_freqavg.parset >log_dp3_freqavg.txt'
     logger.info(f"Running DP3 frequency averaging with command: {freq_avg}")
     os.system(freq_avg)
+ 
+else:
+    logging.info("Only adding columns to existing MS, skipping synthesis and injection steps.")
 
-    ms = os.path.join(dir_mss, name)
-    cols = ['inj', 'inj_exp']
-    ts  = pt.table(ms, readonly=False)
-    colnames = ts.colnames()
-    for col in cols:
+ms = os.path.join(dir_mss, name)
+cols = ['inj', 'inj_exp', 'sub']
+ts  = pt.table(ms, readonly=False)
+colnames = ts.colnames()
+ts.close()   
+for col in cols:
+    if col in colnames:
+        logger.info(f"Column '{col}' already exists in MS: {name}")
+        continue
+    else:
         logger.info(f"Adding column '{col}' to MS: {name}")
-        if col in colnames:
-            logger.info(f"Column '{col}' already exists in MS: {name}")
-            continue
-        else:
-            logger.info(f"Adding column '{col}' to MS: {name}")
-            cmd = f'DP3 msin={ms} msout=. steps=[] msout.datacolumn={col} \
-                    msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
-            logger.info(f"Command to add column: {cmd}")
-            os.system(cmd)
-            logger.info(f"Column '{col}' added to MS: {name}") 
-    ts.close()   
-    
+        cmd = f'DP3 msin={ms} msout=. steps=[] msout.datacolumn={col} \
+                msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
+        logger.info(f"Command to add column: {cmd}")
+        os.system(cmd)
+        logger.info(f"Column '{col}' added to MS: {name}") 
+
+
 os.chdir(dir_work)
 logger.info("losito_runner script completed successfully.")
