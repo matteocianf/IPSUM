@@ -118,7 +118,7 @@ if not only_sub:
     logger.info(f"Making mask: {breizorro_shallow}")
     os.system(breizorro_shallow)
 
-    move_mask = f'mv *.mask.fits {dir_deep_img}/'
+    move_mask = f'mv *.mask.fits ../{dir_deep_img}/'
     logger.info(f"Moving mask to deep image directory: {move_mask}")
     os.system(move_mask)
 
@@ -141,7 +141,7 @@ if not only_sub:
     logger.info(f"Making mask: {breizorro_shallow}")
     os.system(breizorro_shallow)
 
-    move_mask = f'mv *.mask.fits {dir_exp_deep}/'
+    move_mask = f'mv *.mask.fits ../{dir_exp_deep}/'
     logger.info(f"Moving mask to deep image directory: {move_mask}")
     os.system(move_mask)
 
@@ -166,7 +166,7 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r highcut_shallow-MFS-image.fits'
 logger.info(f"Making mask for shallow image: {breizorro_shallow}")
 os.system(breizorro_shallow)
-move_mask = f'mv *.mask.fits {dir_sub_deep}/'
+move_mask = f'mv *.mask.fits ../{dir_sub_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
@@ -214,7 +214,7 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r {name}_sub_shallow-MFS-image.fits'
 logger.info(f"Making mask: {breizorro_shallow}")
 os.system(breizorro_shallow)
-move_mask = f'mv *.mask.fits {dir_sub_deep}/'
+move_mask = f'mv *.mask.fits ../{dir_sub_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
