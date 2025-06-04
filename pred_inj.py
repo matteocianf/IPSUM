@@ -161,6 +161,7 @@ img_sub_shallow = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 6
                             ms = ms, outname = 'highcut_shallow')
 logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
 os.system(img_sub_shallow)
+logger.info('Shallow image created.')
 
 breizorro_shallow = f'breizorro.py -t 3 -r highcut_shallow-MFS-image.fits'
 logger.info(f"Making mask for shallow image: {breizorro_shallow}")
@@ -175,7 +176,7 @@ img_sub_deep = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
 os.system(img_sub_deep)
-
+logger.info('Deep image created.')
 
 
 logger.info(f"Predicting visibilities for model 'high_cut_deep' in MS: {mss_name}")
@@ -195,7 +196,7 @@ for row in range(0, ts.nrows(), stepsize):
     print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
     data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
     model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-    ts.putcol(col, data-model, startrow=row, nrow=stepsize, rowincr=1)
+    ts.putcol(outcolumn, data-model, startrow=row, nrow=stepsize, rowincr=1)
 ts.close()
 logger.info("Subtraction completed successfully.")
 
@@ -208,6 +209,8 @@ shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
                         ms = ms, outname = name + '_sub_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
 os.system(shallow_cmd)
+logger.info('Shallow image created.')
+
 breizorro_shallow = f'breizorro.py -t 3 -r {name}_sub_shallow-MFS-image.fits'
 logger.info(f"Making mask: {breizorro_shallow}")
 os.system(breizorro_shallow)
@@ -221,4 +224,6 @@ deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
                         outname = name + '_sub_deep', mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
+logger.info('Deep image created.')
+
 logger.info("All imaging and subtraction tasks completed successfully.")
