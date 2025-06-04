@@ -158,7 +158,7 @@ if not only_sub:
 else:
     logger.info('Skipping injection and imaging of sources, only subtraction and following steps will be performed.')
 
-os.chdir(dir_sub_shallow)    
+os.chdir(dir_uvcut_shallow)    
 img_sub_shallow = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
                             datacol = 'inj_exp', name = '', scale = 6, niter = 15000, 
                             ms = ms, outname = 'highcut_shallow')
@@ -169,11 +169,11 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r highcut_shallow-MFS-image.fits'
 logger.info(f"Making mask for shallow image: {breizorro_shallow}")
 os.system(breizorro_shallow)
-move_mask = f'mv *.mask.fits {dir_sub_deep}/'
+move_mask = f'mv *.mask.fits {dir_uvcut_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
-os.chdir(dir_sub_deep)
+os.chdir(dir_uvcut_deep)
 img_sub_deep = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
                            datacol = 'inj_exp', name = '', scale = 6, niter = 100000,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
@@ -183,7 +183,7 @@ logger.info('Deep image created.')
 
 
 logger.info(f"Predicting visibilities for model 'high_cut_deep' in MS: {mss_name}")
-predict_cmd = f'wsclean -predict -name {dir_sub_deep}/high_cut_deep -channels-out 6 {dir_mss}/{mss_name} \
+predict_cmd = f'wsclean -predict -name {dir_uvcut_deep}/highcut_deep -channels-out 6 {dir_mss}/{mss_name} \
                 >log_predict.txt'
 logger.info(f"Command to predict visibilities: {predict_cmd}")
 os.system(predict_cmd)
@@ -208,7 +208,7 @@ os.chdir(dir_sub_shallow)
 logger.info('Source subtracted shallow image...')
 
 shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = '', scale = 6, niter = 15000, 
+                        datacol = 'sub', name = 'A2219', scale = 6, niter = 15000, 
                         ms = ms, outname = name + '_sub_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
 os.system(shallow_cmd)
@@ -223,7 +223,7 @@ os.system(move_mask)
 
 os.chdir(dir_sub_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = '', scale = 6, niter = 100000,
+                        datacol = 'sub', name = 'A2219', scale = 6, niter = 100000,
                         outname = name + '_sub_deep', ms = ms, mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
