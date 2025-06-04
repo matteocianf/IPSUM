@@ -31,7 +31,7 @@ def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, out
             -reorder -weight briggs {briggs} -taper-gaussian {taper}arcsec \
             -clean-border 1 -mgain 0.8 -fit-beam -data-column {datacol} \
             -join-channels -channels-out 6 -padding 1.4 -multiscale \
-            -multiscale-scales 0,4,8,16,32,64 -fit-spectral-pol 3 -pol i \
+            -multiscale-scales 0,4,8,16,32 -fit-spectral-pol 3 -pol i \
             -baseline-averaging 8.52211548825 -name {outname} \
             -scale {scale}arcsec -niter {niter} '
     if mask != '':
@@ -127,7 +127,7 @@ if not only_sub:
 
     os.chdir(dir_deep_img)
     deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
-                        datacol = 'inj', name = name, scale = 6, niter = 100000,
+                        datacol = 'inj', name = name, scale = 6, niter = 10000000,
                         outname = name + 'synth_deep', ms = ms, mask = 'synth_shallow')
     logger.info(f"Running deep imaging command: {deep_cmd}")
     os.system(deep_cmd)
@@ -150,7 +150,7 @@ if not only_sub:
 
     os.chdir(dir_exp_deep)
     exp_deep = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
-                           datacol = 'inj_exp', name = name, scale = 6, niter = 100000,
+                           datacol = 'inj_exp', name = name, scale = 6, niter = 10000000,
                            ms = ms, outname = name + '_exp_deep', mask = 'exp_shallow')
     logger.info(f"Running deep imaging command: {exp_deep}")
     os.system(exp_deep)
@@ -175,7 +175,7 @@ os.system(move_mask)
 
 os.chdir(dir_uvcut_deep)
 img_sub_deep = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
-                           datacol = 'inj_exp', name = '', scale = 6, niter = 100000,
+                           datacol = 'inj_exp', name = '', scale = 6, niter = 10000000,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
 os.system(img_sub_deep)
@@ -223,7 +223,7 @@ os.system(move_mask)
 
 os.chdir(dir_sub_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = 'A2219', scale = 6, niter = 100000,
+                        datacol = 'sub', name = 'A2219', scale = 6, niter = 10000000,
                         outname = name + '_sub_deep', ms = ms, mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
