@@ -221,7 +221,7 @@ os.system(move_mask)
 os.chdir(dir_sub_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
                         datacol = 'sub', name = name, scale = 6, niter = 100000,
-                        outname = name + '_sub_deep', mask = 'sub_shallow')
+                        outname = name + '_sub_deep', ms = ms, mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
 logger.info('Deep image created.')
