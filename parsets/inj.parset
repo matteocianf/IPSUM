@@ -1,2 +1,3 @@
 mssname = A2219_synth.MS
 name = A2219
+only_sub = True

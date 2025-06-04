@@ -24,6 +24,20 @@ def directory(directory):
     logger.info(f"Directory {directory} created")
    else:
     logger.info(f"Directory {directory} already exists")
+    
+    
+def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, outname, mask = ''):
+    cmd = f'wsclean -no-update-model-required -minuv-l {minuv} -size {size} {size} \
+            -reorder -weight briggs {briggs} -taper-gaussian {taper}arcsec \
+            -clean-border 1 -mgain 0.8 -fit-beam -data-column {datacol} \
+            -join-channels -channels-out 6 -padding 1.4 -multiscale \
+            -multiscale-scales 0,4,8,16,32,64 -fit-spectral-pol 3 -pol i \
+            -baseline-averaging 8.52211548825 -name {outname} \
+            -scale {scale}arcsec -niter {niter} '
+    if mask != '':
+        cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits '
+    cmd += f'{ms} >log.txt'
+    return cmd
 
 
 logger.info("Starting model prediction and injection script...")
@@ -38,10 +52,15 @@ dir_shallow_img = os.path.join(dir_img, 'synth_shallow')
 dir_deep_img = os.path.join(dir_img, 'synth_deep')
 dir_exp_shallow = os.path.join(dir_img, 'synth_exp_shallow')
 dir_exp_deep = os.path.join(dir_img, 'synth_exp_deep')
-directory(dir_shallow_img)
-directory(dir_deep_img)
-directory(dir_exp_shallow)
-directory(dir_exp_deep)
+dir_sub_shallow = os.path.join(dir_img, 'sub_shallow')
+dir_sub_deep = os.path.join(dir_img, 'sub_deep')
+dir_uvcut_shallow = os.path.join(dir_img, 'uvcut_shallow')
+dir_uvcut_deep = os.path.join(dir_img, 'uvcut_deep')
+
+dirs_to_create = [dir_shallow_img, dir_deep_img, dir_exp_shallow, dir_exp_deep,
+                dir_sub_shallow, dir_sub_deep, dir_uvcut_shallow, dir_uvcut_deep]
+for d in dirs_to_create:
+    directory(d)
 
 try:
     with open(inj_parset, 'r') as file:
@@ -57,6 +76,7 @@ except FileNotFoundError:
 
 mss_name = variables['mssname']
 name = variables['name']
+only_sub = bool(variables['only_sub'])
 
 ms = os.path.join(dir_mss, mss_name)
 cols = ['inj', 'inj_exp']
@@ -86,72 +106,119 @@ logger.info("Model prediction and injection completed successfully.")
 
 #### Imaging
 ### only discrete sources image
-os.chdir(dir_shallow_img)
-shallow_cmd = f'wsclean -no-update-model-required -minuv-l 80 -size 480 480 \
-                -reorder -weight briggs -0.5 -taper-gaussian 60arcsec \
-            	-clean-border 1 -mgain 0.8 -fit-beam -data-column inj \
-	            -join-channels -channels-out 6 -padding 1.4 -multiscale \
-	            -multiscale-scales 0,4,8,16,32,64 -fit-spectral-pol 3 -pol i \
-	            -baseline-averaging 8.52211548825 -name {name}_synth_shallow \
-	            -scale 6arcsec -niter 15000 \
-	            {ms} \
-	            >log.txt'
+if not only_sub:
+    os.chdir(dir_shallow_img)
+    shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
+                            datacol = 'inj', name = name, scale = 6, niter = 15000, 
+                            ms = ms, outname = name + '_synth_shallow')
+    logger.info(f"Running shallow imaging command: {shallow_cmd}")
+    os.system(shallow_cmd)
+
+    breizorro_shallow = f'breizorro.py -t 3 -r {name}_synth_shallow-MFS-image.fits'
+    logger.info(f"Making mask: {breizorro_shallow}")
+    os.system(breizorro_shallow)
+
+    move_mask = f'mv *.mask.fits {dir_deep_img}/'
+    logger.info(f"Moving mask to deep image directory: {move_mask}")
+    os.system(move_mask)
+
+    os.chdir(dir_deep_img)
+    deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
+                        datacol = 'inj', name = name, scale = 6, niter = 100000,
+                        outname = name + 'synth_deep', ms = ms, mask = 'synth_shallow')
+    logger.info(f"Running deep imaging command: {deep_cmd}")
+    os.system(deep_cmd)
+
+    # Imaging with injected exponential source
+    os.chdir(dir_exp_shallow)
+    exp_shallow = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
+                            datacol = 'inj_exp', name = name, scale = 6, niter = 15000, 
+                            ms = ms, outname = name + '_exp_shallow')
+    logger.info(f"Running shallow imaging command: {exp_shallow}")
+    os.system(exp_shallow)
+
+    breizorro_shallow = f'breizorro.py -t 3 -r {name}_exp_shallow-MFS-image.fits'
+    logger.info(f"Making mask: {breizorro_shallow}")
+    os.system(breizorro_shallow)
+
+    move_mask = f'mv *.mask.fits {dir_exp_deep}/'
+    logger.info(f"Moving mask to deep image directory: {move_mask}")
+    os.system(move_mask)
+
+    os.chdir(dir_exp_deep)
+    exp_deep = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
+                           datacol = 'inj_exp', name = name, scale = 6, niter = 100000,
+                           ms = ms, outname = name + '_exp_deep', mask = 'exp_shallow')
+    logger.info(f"Running deep imaging command: {exp_deep}")
+    os.system(exp_deep)
+    
+else:
+    logger.info('Skipping injection and imaging of sources, only subtraction and following steps will be performed.')
+
+os.chdir(dir_sub_shallow)    
+img_sub_shallow = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
+                            datacol = 'inj_exp', name = name, scale = 6, niter = 15000, 
+                            ms = ms, outname = 'highcut_shallow')
+logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
+os.system(img_sub_shallow)
+
+breizorro_shallow = f'breizorro.py -t 3 -r highcut_shallow-MFS-image.fits'
+logger.info(f"Making mask for shallow image: {breizorro_shallow}")
+os.system(breizorro_shallow)
+move_mask = f'mv *.mask.fits {dir_sub_deep}/'
+logger.info(f"Moving mask to deep image directory: {move_mask}")
+os.system(move_mask)
+
+os.chdir(dir_sub_deep)
+img_sub_deep = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
+                           datacol = 'inj_exp', name = name, scale = 6, niter = 100000,
+                           ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
+logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
+os.system(img_sub_deep)
+
+
+
+logger.info(f"Predicting visibilities for model 'high_cut_deep' in MS: {mss_name}")
+predict_cmd = f'wsclean -predict -name {dir_sub_deep}/high_cut_deep -channels-out 6 {dir_mss}/{mss_name} \
+                >log_predict.txt'
+logger.info(f"Command to predict visibilities: {predict_cmd}")
+os.system(predict_cmd)
+logger.info("Model predicted.")
+
+ts = pt.table(ms, readonly=False)
+colnames = ts.colnames()
+logger.info("Starting model subtraction from MS...")
+stepsize = 10000
+data_column = 'inj_exp'
+outcolumn = 'sub'
+for row in range(0, ts.nrows(), stepsize):
+    print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
+    data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+    model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+    ts.putcol(col, data-model, startrow=row, nrow=stepsize, rowincr=1)
+ts.close()
+logger.info("Subtraction completed successfully.")
+
+
+os.chdir(dir_sub_shallow)
+logger.info('Source subtracted shallow image...')
+
+shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
+                        datacol = 'sub', name = name, scale = 6, niter = 15000, 
+                        ms = ms, outname = name + '_sub_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
-# os.system(shallow_cmd)
-
-breizorro_shallow = f'breizorro.py -t 3 -r {name}_synth_shallow-MFS-image.fits'
+os.system(shallow_cmd)
+breizorro_shallow = f'breizorro.py -t 3 -r {name}_sub_shallow-MFS-image.fits'
 logger.info(f"Making mask: {breizorro_shallow}")
-# os.system(breizorro_shallow)
-
-move_mask = f'mv *.mask.fits {dir_deep_img}/'
+os.system(breizorro_shallow)
+move_mask = f'mv *.mask.fits {dir_sub_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
-# os.system(move_mask)
+os.system(move_mask)
 
-os.chdir(dir_deep_img)
-deep_cmd = f'wsclean -no-update-model-required -minuv-l 80 -size 480 480 \
-            -reorder -weight briggs -0.5 -taper-gaussian 60arcsec \
-            -clean-border 1 -mgain 0.8 -fit-beam -data-column inj \
-            -join-channels -channels-out 6 -padding 1.4 -multiscale \
-            -multiscale-scales 0,4,8,16,32,64 -fit-spectral-pol 3 -pol i \
-            -baseline-averaging 8.52211548825 -name {name}_synth \
-            -scale 6arcsec -niter 100000 -fits-mask {name}_synth_shallow-MFS-image.mask.fits\
-            {ms} \
-            >log.txt'
+os.chdir(dir_sub_deep)
+deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
+                        datacol = 'sub', name = name, scale = 6, niter = 100000,
+                        outname = name + '_sub_deep', mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
-# os.system(deep_cmd)
-
-os.chdir(dir_exp_shallow)
-exp_shallow = f'wsclean -no-update-model-required -minuv-l 80 -size 480 480 \
-                -reorder -weight briggs -0.5 -taper-gaussian 60arcsec \
-                -clean-border 1 -mgain 0.8 -fit-beam -data-column inj_exp \
-                -join-channels -channels-out 6 -padding 1.4 -multiscale \
-                -multiscale-scales 0,4,8,16,32,64 -fit-spectral-pol 3 -pol i \
-                -baseline-averaging 8.52211548825 -name {name}_exp_shallow \
-                -scale 6arcsec -niter 15000 \
-                {ms} \
-                >log.txt'
-logger.info(f"Running shallow imaging command: {exp_shallow}")
-# os.system(exp_shallow)
-
-breizorro_shallow = f'breizorro.py -t 3 -r {name}_exp_shallow-MFS-image.fits'
-logger.info(f"Making mask: {breizorro_shallow}")
-# os.system(breizorro_shallow)
-
-move_mask = f'mv *.mask.fits {dir_exp_deep}/'
-logger.info(f"Moving mask to deep image directory: {move_mask}")
-# os.system(move_mask)
-
-os.chdir(dir_exp_deep)
-exp_deep = f'wsclean -no-update-model-required -minuv-l 80 -size 480 480 \
-            -reorder -weight briggs -0.5 -taper-gaussian 60arcsec \
-            -clean-border 1 -mgain 0.8 -fit-beam -data-column inj_exp \
-            -join-channels -channels-out 6 -padding 1.4 -multiscale \
-            -multiscale-scales 0,4,8,16,32,64 -fit-spectral-pol 3 -pol i \
-            -baseline-averaging 8.52211548825 -name {name}_exp \
-            -scale 6arcsec -niter 100000 -fits-mask {name}_exp_shallow-MFS-image.mask.fits \
-            {ms} \
-            >log.txt'
-logger.info(f"Running deep imaging command: {exp_deep}")
-# os.system(exp_deep)
-
-# to do img shallow mask img deep img exp shallow mask img exp deep (predict?) subtraction disc sources sub shallow img mask sub deep img 
+os.system(deep_cmd)
+logger.info("All imaging and subtraction tasks completed successfully.")
