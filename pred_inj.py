@@ -79,34 +79,34 @@ name = variables['name']
 only_sub = bool(variables['only_sub'])
 
 ms = os.path.join(dir_mss, mss_name)
-cols = ['inj', 'inj_exp']
-models = ['inj_sources', 'exponential']
-for col in cols:
-    model_name = models[0] if col == 'inj' else models[1]
-    logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
-    predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
-                    >log_predict.txt'
-    logger.info(f"Command to predict visibilities: {predict_cmd}")
-    os.system(predict_cmd)
-    logger.info("Model predicted.")
-
-    ts = pt.table(ms, readonly=False)
-    colnames = ts.colnames()
-    logger.info("Starting model injection into MS...")
-    stepsize = 10000
-    data_column = 'DATA' if col == 'inj' else 'inj'
-    for row in range(0, ts.nrows(), stepsize):
-        print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-        data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
-        model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
-        ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
-    ts.close()
-logger.info("Model prediction and injection completed successfully.")
-
-
 #### Imaging
 ### only discrete sources image
 if not only_sub:
+    cols = ['inj', 'inj_exp']
+    models = ['inj_sources', 'exponential']
+    for col in cols:
+        model_name = models[0] if col == 'inj' else models[1]
+        logger.info(f"Predicting visibilities for model: {model_name} in MS: {mss_name}")
+        predict_cmd = f'wsclean -predict -name {dir_img}/{model_name} {dir_mss}/{mss_name} \
+                        >log_predict.txt'
+        logger.info(f"Command to predict visibilities: {predict_cmd}")
+        os.system(predict_cmd)
+        logger.info("Model predicted.")
+
+        ts = pt.table(ms, readonly=False)
+        colnames = ts.colnames()
+        logger.info("Starting model injection into MS...")
+        stepsize = 10000
+        data_column = 'DATA' if col == 'inj' else 'inj'
+        for row in range(0, ts.nrows(), stepsize):
+            print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
+            data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+            model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+            ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
+        ts.close()
+    logger.info("Model prediction and injection completed successfully.")
+    
+    
     os.chdir(dir_shallow_img)
     shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
                             datacol = 'inj', name = name, scale = 6, niter = 15000, 
