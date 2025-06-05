@@ -36,9 +36,9 @@ def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, out
             -scale {scale}arcsec -niter {niter} '
     if mask != '':
         if name != '':
-            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 2 '
+            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 1.5 '
         else:
-            cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 2 '
+            cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 1.5 '
     cmd += f'{ms} >log.txt'
     return cmd
 
@@ -80,6 +80,7 @@ except FileNotFoundError:
 mss_name = variables['mssname']
 name = variables['name']
 only_sub = int(variables['only_sub'])
+minuv_sub = int(variables['minuv_sub'])
 
 ms = os.path.join(dir_mss, mss_name)
 #### Imaging
@@ -159,7 +160,7 @@ else:
     logger.info('Skipping injection and imaging of sources, only subtraction and following steps will be performed.')
 
 os.chdir(dir_uvcut_shallow)    
-img_sub_shallow = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
+img_sub_shallow = wsclean_cmd(minuv = minuv_sub, size = 480, briggs = -0.5, taper = 60, 
                             datacol = 'inj_exp', name = '', scale = 6, niter = 15000, 
                             ms = ms, outname = 'highcut_shallow')
 logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
@@ -174,7 +175,7 @@ logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
 os.chdir(dir_uvcut_deep)
-img_sub_deep = wsclean_cmd(minuv = 2722, size = 480, briggs = -0.5, taper = 60, 
+img_sub_deep = wsclean_cmd(minuv = minuv_sub, size = 480, briggs = -0.5, taper = 60, 
                            datacol = 'inj_exp', name = '', scale = 6, niter = 10000000,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")

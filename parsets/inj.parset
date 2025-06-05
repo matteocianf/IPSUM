@@ -1,3 +1,4 @@
 mssname = A2219_synth.MS
 name = A2219
-only_sub = 0
+only_sub = 1
+minuv_sub = 2000
