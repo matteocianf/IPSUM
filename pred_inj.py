@@ -28,7 +28,7 @@ def directory(directory):
     
 def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, outname, mask = ''):
     cmd = f'wsclean -no-update-model-required -minuv-l {minuv} -size {size} {size} \
-            -reorder -weight briggs {briggs} -taper-gaussian {taper}arcsec \
+            -reorder -weight briggs {briggs} \
             -clean-border 1 -mgain 0.8 -fit-beam -data-column {datacol} \
             -join-channels -channels-out 6 -padding 1.4 -multiscale \
             -multiscale-scales 0,4,8,16,32 -fit-spectral-pol 3 -pol i \
@@ -39,6 +39,8 @@ def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, out
             cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 1.5 '
         else:
             cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 1.5 '
+    if taper != 0:
+        cmd += f'-taper-gaussian {taper}arcsec '
     cmd += f'{ms} >log.txt'
     return cmd
 
@@ -160,7 +162,7 @@ else:
     logger.info('Skipping injection and imaging of sources, only subtraction and following steps will be performed.')
 
 os.chdir(dir_uvcut_shallow)    
-img_sub_shallow = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper = 60, 
+img_sub_shallow = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper = 0, 
                             datacol = 'inj_exp', name = '', scale = 1.5, niter = 15000, 
                             ms = ms, outname = 'highcut_shallow')
 logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
@@ -175,7 +177,7 @@ logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
 os.chdir(dir_uvcut_deep)
-img_sub_deep = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper = 60, 
+img_sub_deep = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper = 0, 
                            datacol = 'inj_exp', name = '', scale = 1.5, niter = 10000000,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
