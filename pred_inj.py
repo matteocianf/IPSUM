@@ -160,8 +160,8 @@ else:
     logger.info('Skipping injection and imaging of sources, only subtraction and following steps will be performed.')
 
 os.chdir(dir_uvcut_shallow)    
-img_sub_shallow = wsclean_cmd(minuv = minuv_sub, size = 480, briggs = -0.5, taper = 60, 
-                            datacol = 'inj_exp', name = '', scale = 6, niter = 15000, 
+img_sub_shallow = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper = 60, 
+                            datacol = 'inj_exp', name = '', scale = 1.5, niter = 15000, 
                             ms = ms, outname = 'highcut_shallow')
 logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
 os.system(img_sub_shallow)
@@ -175,8 +175,8 @@ logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
 os.chdir(dir_uvcut_deep)
-img_sub_deep = wsclean_cmd(minuv = minuv_sub, size = 480, briggs = -0.5, taper = 60, 
-                           datacol = 'inj_exp', name = '', scale = 6, niter = 10000000,
+img_sub_deep = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper = 60, 
+                           datacol = 'inj_exp', name = '', scale = 1.5, niter = 10000000,
                            ms = ms, outname = 'highcut_deep', mask = 'highcut_shallow')
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
 os.system(img_sub_deep)
