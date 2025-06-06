@@ -267,7 +267,6 @@ n_points = int(variables['npoints'])    # Number of points to generate
 r = float(variables['r'])               # Radius of the sphere in kpc
 I0 = float(variables['I0'])             # Central brightness in Jy/arcsec^2
 re = float(variables['re'])             # Effective radius in kpc
-imsize = int(variables['imsize'])       # Image size in pixels
 flux_value = float(variables['flux'])   # Flux value in Jy
 scale = float(variables['scale'])       # Conversion scale in kpc/"
 tot_flux = float(variables['tot_flux']) # Total flux in Jy
@@ -285,6 +284,7 @@ try:
     with fits.open(filename) as hdul:
         header = hdul[0].header
         pixsize = abs(header['CDELT2']) * 3600  # from deg to arcsec
+        imsize = header['NAXIS1']               # Assuming square image, NAXIS1 == NAXIS2
 except FileNotFoundError:
     logger.error(f"Input FITS file not found at {filename}")
 except KeyError:

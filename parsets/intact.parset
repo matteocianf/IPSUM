@@ -1,6 +1,5 @@
 npoints = 300
 r = 2250
-imsize = 480
 flux = 0.00022
 save = 1
 name = test
