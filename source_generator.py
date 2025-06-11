@@ -126,7 +126,7 @@ class checks:
         self.exp = exp
         self.__dict__.update(kwargs)
 
-    def show_image(self, cmap = 'Blues', save = False):
+    def show_image(self, cmap = 'cubehelix', save = False):
         '''
         Shows the image of the sphere projection
         '''
