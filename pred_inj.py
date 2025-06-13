@@ -61,9 +61,12 @@ dir_sub_shallow = os.path.join(dir_img, 'sub_shallow')
 dir_sub_deep = os.path.join(dir_img, 'sub_deep')
 dir_uvcut_shallow = os.path.join(dir_img, 'uvcut_shallow')
 dir_uvcut_deep = os.path.join(dir_img, 'uvcut_deep')
+dir_halo_hr_shallow = os.path.join(dir_img, 'halo_hr_shallow')
+dir_halo_hr_deep = os.path.join(dir_img, 'halo_hr_deep')
 
 dirs_to_create = [dir_shallow_img, dir_deep_img, dir_exp_shallow, dir_exp_deep,
-                dir_sub_shallow, dir_sub_deep, dir_uvcut_shallow, dir_uvcut_deep]
+                dir_sub_shallow, dir_sub_deep, dir_uvcut_shallow, dir_uvcut_deep,
+                dir_halo_hr_shallow, dir_halo_hr_deep]
 for d in dirs_to_create:
     directory(d)
 
@@ -228,6 +231,32 @@ os.chdir(dir_sub_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
                         datacol = 'sub', name = 'A2219', scale = 6, niter = 10000000,
                         outname = name + '_sub_deep', ms = ms, mask = 'sub_shallow')
+logger.info(f"Running deep imaging command: {deep_cmd}")
+os.system(deep_cmd)
+logger.info('Deep image created.')
+
+
+os.chdir(dir_halo_hr_shallow)
+logger.info('Source subtracted shallow image...')
+
+shallow_cmd = wsclean_cmd(minuv = 80, size = 1920, briggs = -0.5, taper = 0,
+                        datacol = 'sub', name = 'halo_hr', scale = 1.5, niter = 15000, 
+                        ms = ms, outname = name + '_shallow')
+logger.info(f"Running shallow imaging command: {shallow_cmd}")
+os.system(shallow_cmd)
+logger.info('Shallow image created.')
+
+breizorro_shallow = f'breizorro.py -t 3 -r halo_hr_shallow-MFS-image.fits'
+logger.info(f"Making mask: {breizorro_shallow}")
+os.system(breizorro_shallow)
+move_mask = f'mv *.mask.fits {dir_halo_hr_deep}/'
+logger.info(f"Moving mask to deep image directory: {move_mask}")
+os.system(move_mask)
+
+os.chdir(dir_halo_hr_deep)
+deep_cmd = wsclean_cmd(minuv = 80, size = 1920, briggs = -0.5, taper = 0,
+                        datacol = 'sub', name = 'halo_hr', scale = 1.5, niter = 10000000,
+                        outname = name + '_deep', ms = ms, mask = 'halo_hr_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
 logger.info('Deep image created.')
