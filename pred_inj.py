@@ -36,9 +36,9 @@ def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, out
             -scale {scale}arcsec -niter {niter} '
     if mask != '':
         if name != '':
-            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 2 '
+            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 2.5 '
         else:
-            cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 2 '
+            cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 2.5 '
     if taper != 0:
         cmd += f'-taper-gaussian {taper}arcsec '
     cmd += f'{ms} >log.txt'
@@ -172,7 +172,7 @@ logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
 os.system(img_sub_shallow)
 logger.info('Shallow image created.')
 
-breizorro_shallow = f'breizorro.py -t 3 -r highcut_shallow-MFS-image.fits'
+breizorro_shallow = f'breizorro.py -t 4 -r highcut_shallow-MFS-image.fits'
 logger.info(f"Making mask for shallow image: {breizorro_shallow}")
 os.system(breizorro_shallow)
 move_mask = f'mv *.mask.fits {dir_uvcut_deep}/'
@@ -186,7 +186,6 @@ img_sub_deep = wsclean_cmd(minuv = minuv_sub, size = 1920, briggs = -0.5, taper 
 logger.info(f"Running deep image for subtraction command: {img_sub_deep}")
 os.system(img_sub_deep)
 logger.info('Deep image created.')
-
 
 logger.info(f"Predicting visibilities for model 'high_cut_deep' in MS: {mss_name}")
 predict_cmd = f'wsclean -predict -name {dir_uvcut_deep}/highcut_deep -channels-out 6 {dir_mss}/{mss_name} \
@@ -240,7 +239,7 @@ os.chdir(dir_halo_hr_shallow)
 logger.info('Source subtracted shallow image...')
 
 shallow_cmd = wsclean_cmd(minuv = 80, size = 1920, briggs = -0.5, taper = 0,
-                        datacol = 'sub', name = 'halo_hr', scale = 1.5, niter = 15000, 
+                        datacol = 'inj_exp', name = 'halo_hr', scale = 1.5, niter = 15000, 
                         ms = ms, outname = 'halo_hr_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
 os.system(shallow_cmd)
@@ -255,8 +254,8 @@ os.system(move_mask)
 
 os.chdir(dir_halo_hr_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 1920, briggs = -0.5, taper = 0,
-                        datacol = 'sub', name = 'halo_hr', scale = 1.5, niter = 10000000,
-                        outname = 'halo_hr_deep', ms = ms, mask = 'halo_hr_shallow')
+                        datacol = 'inj_exp', name = 'halo_hr', scale = 1.5, niter = 10000000,
+                        outname = 'halo_hr_deep', ms = ms, mask = '_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
 logger.info('Deep image created.')
