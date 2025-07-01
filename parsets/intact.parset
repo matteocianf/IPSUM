@@ -1,11 +1,8 @@
-npoints = 300
-r = 2250
-flux = 0.00022
+r = 1300
 save = 1
 name = test
-scale = 3.65
+scale = 2.9
 output = test_model
 I0 = 9e-6
-re = 330
+re = 130
 save_exp = 1
-tot_flux = 0

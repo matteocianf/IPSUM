@@ -38,24 +38,24 @@ def directory(directory):
 
 
 class run:
-    def __init__(self, n_points, r, I0, re, imsize, flux_value):
+    def __init__(self, n_points, r, I0, re, imsize, flux_hist, flux_bin_edges):
         self.n_points = n_points
         self.r = r
         self.I0 = I0
         self.re = re
         self.imsize = imsize
-        self.flux_value = flux_value
+        self.flux_hist = flux_hist
+        self.flux_bin_edges = flux_bin_edges
         self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
         
     def __call__(self):
-        x, y, z = self.generate_uniform_sphere()
+        x, y, z, flux_values = self.generate_sphere()
         logger.info(f"Generated {self.n_points} points in a sphere of radius {self.r:.1f} pixels.")
-        image = self.generate_image(x, y)
+        image = self.generate_image(x, y, flux_values)
         logger.info(f'Projected {self.n_points} points onto a 2D image of size {self.imsize}x{self.imsize} pixels.')
-        logger.info(f'Flux value for each point: {self.flux_value} Jy.')
         return x, y, z, image
     
-    def generate_uniform_sphere(self):
+    def generate_sphere(self):
         ''' 
         Generates a uniform distribution of points in the volume of a sphere
         '''
@@ -66,7 +66,9 @@ class run:
         x = rho * np.sin(theta) * np.cos(phi)
         y = rho * np.sin(theta) * np.sin(phi)
         z = rho * np.cos(theta)
-        return x, y, z
+        # generate flux values based on the provided histogram
+        flux_values = np.random.choice(self.flux_bin_edges[:-1], size = self.n_points, p = self.flux_hist/np.sum(self.flux_hist))
+        return x, y, z, flux_values
     
     def generate_exponential(self, pixsize):
         '''
@@ -79,7 +81,7 @@ class run:
         logger.info(f'Generated an exponential profile with I0 = {self.I0/pixsize**2} uJy/arcsec^2 and re = {self.re:.1f} pixels.')
         return I
 
-    def generate_image(self, x, y):
+    def generate_image(self, x, y, flux_values):
         '''
         Generates a 2D image from the 3D points projected onto a 2D plane
         '''
@@ -94,7 +96,7 @@ class run:
         y_pixel_valid = y_pixel[valid_mask]
         # Add flux to the image at valid pixel locations.
         # np.add.at handles cases where multiple points map to the same pixel by summing.
-        np.add.at(image, (y_pixel_valid, x_pixel_valid), self.flux_value)
+        np.add.at(image, (y_pixel_valid, x_pixel_valid), flux_values)
         return image
         
     def flux_calc(self, image):
@@ -116,7 +118,7 @@ class run:
         
 
 class checks:
-    def __init__(self, x, y, z, imsize, image, r, exp, **kwargs):
+    def __init__(self, x, y, z, imsize, image, r, exp, flux_histogram, flux_bin_edges, **kwargs):
         self.x = x
         self.y = y
         self.z = z
@@ -124,6 +126,8 @@ class checks:
         self.image = image
         self.r = r
         self.exp = exp
+        self.flux_hist = flux_histogram
+        self.flux_bin_edges = flux_bin_edges
         self.__dict__.update(kwargs)
 
     def show_image(self, cmap = 'cubehelix', save = False):
@@ -135,12 +139,12 @@ class checks:
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel('x [px]', fontsize = 16)
         ax.set_ylabel('y [px]', fontsize = 16)
-        im = ax.imshow(self.image, cmap = cmap, origin = 'lower')
+        im = ax.imshow(self.image, cmap = cmap, origin = 'lower', vmin = 0, vmax = np.max(self.image))
         clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
         clb.set_label(label = 'Flux [Jy]', size = 18)
         clb.ax.tick_params(labelsize = 12)
         if save:
-            plt.savefig('projection_2d.png', dpi = 300, bbox_inches = 'tight')
+            plt.savefig('projection_2d.png', dpi = 600, bbox_inches = 'tight')
         plt.close()
         
     def plot3d(self, color = 'royalblue', s = 1, save = False):
@@ -185,7 +189,8 @@ class checks:
         ax.set_xlabel(r'$r$ [pixel]', fontsize = 16)
         ax.set_ylabel('Density [sources/bin]', fontsize = 16)
         # plt.bar(bin_centers, densities, width = np.diff(bin_edges), color = c)
-        ax.hist(bin_centers, facecolor = c, bins = bins, alpha = 0.75, edgecolor = 'black', weights = densities, density = False, label = 'Observed density')
+        ax.hist(bin_centers, weights = densities, density = False, bins = bins, \
+                facecolor = c, alpha = 0.75, edgecolor = 'black', label = 'Observed density')
         ax.plot(bin_centers, theoretical_densities, 'r-', label = 'Theoretical density')
         plt.legend(loc = 'best')        
         if save:
@@ -213,18 +218,33 @@ class checks:
         '''
         Shows the 2D image with the sources and the exponential profile
         '''
+        img = self.image + self.exp  # Combine the image and the exponential profile
         fig, ax = plt.subplots(figsize = (8, 8))
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel('x [px]', fontsize = 16)
         ax.set_ylabel('y [px]', fontsize = 16)
-        im = ax.imshow(self.image + self.exp, cmap = cmap, origin = 'lower', norm = 'log', vmin = 1e-7, vmax = 1e-3)
+        im = ax.imshow(img, cmap = cmap, origin = 'lower', norm = 'log', vmin = 1e-8, vmax = np.max(img))
         clb = fig.colorbar(im, shrink = 0.8, aspect = 30, orientation = 'vertical')
         clb.set_label(label = 'Flux [Jy]', size = 18)
         clb.ax.tick_params(labelsize = 12)
         if save:
-            plt.savefig('sources_and_exp.png', dpi = 300, bbox_inches = 'tight')
+            plt.savefig('sources_and_exp.png', dpi = 600, bbox_inches = 'tight')
         plt.close()
         
+    def show_flux_histogram(self, save = False):
+        '''
+        Shows the histogram of the flux values
+        '''
+        fig = plt.figure(figsize = (8, 8))
+        ax = fig.add_subplot(111)
+        ax.tick_params('both', labelsize = 12)
+        ax.set_xlabel('Flux [Jy]', fontsize = 16)
+        ax.set_ylabel('Number of sources', fontsize = 16)
+        ax.hist(self.flux_bin_edges[:-1], bins = self.flux_bin_edges, weights = self.flux_hist, \
+                color = 'royalblue', edgecolor = 'k', alpha = 0.75)
+        if save:
+            plt.savefig('flux_histogram.png', dpi = 300, bbox_inches = 'tight')
+        plt.close()
 
 #####################
 #    Main script    #
@@ -263,20 +283,13 @@ except FileNotFoundError:
 # Parameters
 # REMEMBER IMSIZE MUST BE THE SAME AS THE INITIAL IMAGE
 name = variables['name']
-n_points = int(variables['npoints'])    # Number of points to generate
-r = float(variables['r'])               # Radius of the sphere in kpc
-I0 = float(variables['I0'])             # Central brightness in Jy/arcsec^2
-re = float(variables['re'])             # Effective radius in kpc
-flux_value = float(variables['flux'])   # Flux value in Jy
-scale = float(variables['scale'])       # Conversion scale in kpc/"
-tot_flux = float(variables['tot_flux']) # Total flux in Jy
+r = float(variables['r'])                  # Radius of the sphere in kpc
+I0 = float(variables['I0'])                # Central brightness in Jy/arcsec^2
+re = float(variables['re'])                # Effective radius in kpc
+scale = float(variables['scale'])          # Conversion scale in kpc/"
 save = int(variables['save'])
 save_exp = int(variables['save_exp'])
 outname = variables['output']
-
-if tot_flux != 0:
-    flux_value = tot_flux / n_points    # If total flux is specified, adjust flux value per point
-    logger.info(f"Total flux specified: {tot_flux} Jy. Adjusted flux value per point: {flux_value} Jy.")
     
 # opens the fits file to get the header and pixsize
 filename = dir_img + '/' + name + '.fits'
@@ -291,14 +304,21 @@ except KeyError:
     logger.error(f"CDELT2 not found in FITS header of {filename}")
 
 
+flux_histogram = np.array([200, 150, 50, 25, 15, 10, 5, 5, 1])
+flux_bin_edges = np.linspace(1, 20, len(flux_histogram) + 1) * 1e-3  # Flux bin edges in mJy
+n_points = np.sum(flux_histogram)    # Total number of points to generate
+logger.info(f"Total number of points to generate: {n_points}")
+
+
 # Generate the sphere
 r = r / scale / pixsize                   # Convert radius to pixels 
 re = re / scale / pixsize                 # Effective radius in pixels
 I0 = I0 * pixsize**2                      # Convert I0 to Jy/pixel for the model
-sphere = run(n_points, r, I0, re, imsize, flux_value)
+sphere = run(n_points, r, I0, re, imsize, flux_histogram, flux_bin_edges)
 x, y, z, image = sphere()
 fluxes = sphere.flux_calc(image)          # Estimate the total flux in the image
 logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
+
 
 exp2d = sphere.generate_exponential(pixsize)  # Generate the exponential profile
 flux_exp = sphere.flux_exp()                  # Estimate the flux of the exponential profile
@@ -329,13 +349,14 @@ os.chdir(dir_work)
 
 # Check the distribution of points
 os.chdir(dir_plots)
-c = checks(x, y, z, imsize, image, r, exp2d)
+c = checks(x, y, z, imsize, image, r, exp2d, flux_histogram, flux_bin_edges)
 c.show_image(save = save)
 if n_points < 10000:
     c.plot3d(save = save)
 c.show_dist(save = save)
 c.exp2d_image(save = save)
 c.sources_and_exp(save = save)  # Show the sources and the exponential profile
+c.show_flux_histogram(save = save)  # Show the histogram of flux values
 os.chdir(dir_work)       
 
 logger.info("Source generation completed successfully.")
