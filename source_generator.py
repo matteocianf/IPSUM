@@ -67,7 +67,6 @@ class run:
         y = rho * np.sin(theta) * np.sin(phi)
         z = rho * np.cos(theta)
 
-        # Generate flux values based on the histogram
         flux_values = np.zeros(self.n_points)
         start_idx = 0
         for i in range(len(self.flux_bin_edges) - 1):
@@ -75,9 +74,11 @@ class run:
             if num_points_in_bin > 0:
                 # Generate random flux values within the current bin
                 bin_flux_values = np.random.uniform(self.flux_bin_edges[i], self.flux_bin_edges[i + 1], num_points_in_bin)
-                flux_values[i * num_points_in_bin:(i + 1) * num_points_in_bin] = bin_flux_values
+                # Correctly place the generated fluxes into the main array
+                flux_values[start_idx : start_idx + num_points_in_bin] = bin_flux_values
                 start_idx += num_points_in_bin
         # Shuffle the flux values to randomize their assignment to points
+        np.random.shuffle(flux_values)
         return x, y, z, flux_values
     
     def generate_exponential(self, pixsize):
