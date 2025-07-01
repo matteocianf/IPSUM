@@ -241,7 +241,7 @@ logger.info('Source subtracted shallow image...')
 
 shallow_cmd = wsclean_cmd(minuv = 80, size = 1920, briggs = -0.5, taper = 0,
                         datacol = 'sub', name = 'halo_hr', scale = 1.5, niter = 15000, 
-                        ms = ms, outname = name + '_shallow')
+                        ms = ms, outname = 'halo_hr_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
 os.system(shallow_cmd)
 logger.info('Shallow image created.')
@@ -256,7 +256,7 @@ os.system(move_mask)
 os.chdir(dir_halo_hr_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 1920, briggs = -0.5, taper = 0,
                         datacol = 'sub', name = 'halo_hr', scale = 1.5, niter = 10000000,
-                        outname = name + '_deep', ms = ms, mask = 'halo_hr_shallow')
+                        outname = 'halo_hr_deep', ms = ms, mask = 'halo_hr_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
 logger.info('Deep image created.')
