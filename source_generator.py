@@ -66,8 +66,18 @@ class run:
         x = rho * np.sin(theta) * np.cos(phi)
         y = rho * np.sin(theta) * np.sin(phi)
         z = rho * np.cos(theta)
-        # generate flux values based on the provided histogram
-        flux_values = np.random.choice(self.flux_bin_edges[:-1], size = self.n_points, p = self.flux_hist/np.sum(self.flux_hist))
+
+        # Generate flux values based on the histogram
+        flux_values = np.zeros(self.n_points)
+        for i in range(len(self.flux_bin_edges) - 1):
+            num_points_in_bin = int(self.flux_hist[i])
+            if num_points_in_bin > 0:
+                # Generate random flux values within the current bin
+                bin_flux_values = np.random.uniform(self.flux_bin_edges[i], self.flux_bin_edges[i + 1], num_points_in_bin)
+                flux_values[i * num_points_in_bin:(i + 1) * num_points_in_bin] = bin_flux_values
+
+        # Shuffle the flux values to randomize their assignment to points
+        np.random.shuffle(flux_values)
         return x, y, z, flux_values
     
     def generate_exponential(self, pixsize):
@@ -305,7 +315,7 @@ except KeyError:
 
 
 flux_histogram = np.array([200, 150, 50, 25, 15, 10, 5, 5, 1])
-flux_bin_edges = np.linspace(1, 20, len(flux_histogram) + 1) * 1e-3  # Flux bin edges in mJy
+flux_bin_edges = np.linspace(1e-5, 20, len(flux_histogram) + 1) * 1e-3  # Flux bin edges in mJy
 n_points = np.sum(flux_histogram)    # Total number of points to generate
 logger.info(f"Total number of points to generate: {n_points}")
 
