@@ -8,6 +8,7 @@
 import os
 import logging
 import numpy as np
+import pandas as pd
 from astropy.io import fits
 import matplotlib.pyplot as plt
 
@@ -38,7 +39,7 @@ def directory(directory):
 
 
 class run:
-    def __init__(self, n_points, r, I0, re, imsize, flux_hist, flux_bin_edges):
+    def __init__(self, n_points, r, I0, re, imsize, flux_hist, flux_bin_edges, flux_list = None):
         self.n_points = n_points
         self.r = r
         self.I0 = I0
@@ -46,6 +47,7 @@ class run:
         self.imsize = imsize
         self.flux_hist = flux_hist
         self.flux_bin_edges = flux_bin_edges
+        self.flux_list = flux_list
         self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
         
     def __call__(self):
@@ -53,7 +55,7 @@ class run:
         logger.info(f"Generated {self.n_points} points in a sphere of radius {self.r:.1f} pixels.")
         image = self.generate_image(x, y, flux_values)
         logger.info(f'Projected {self.n_points} points onto a 2D image of size {self.imsize}x{self.imsize} pixels.')
-        return x, y, z, image
+        return x, y, z, image, flux_values
     
     def generate_sphere(self):
         ''' 
@@ -67,17 +69,20 @@ class run:
         y = rho * np.sin(theta) * np.sin(phi)
         z = rho * np.cos(theta)
 
-        flux_values = np.zeros(self.n_points)
-        start_idx = 0
-        for i in range(len(self.flux_bin_edges) - 1):
-            num_points_in_bin = int(self.flux_hist[i])
-            if num_points_in_bin > 0:
-                # Generate random flux values within the current bin
-                bin_flux_values = np.random.uniform(self.flux_bin_edges[i], self.flux_bin_edges[i + 1], num_points_in_bin)
-                # Correctly place the generated fluxes into the main array
-                flux_values[start_idx : start_idx + num_points_in_bin] = bin_flux_values
-                start_idx += num_points_in_bin
-        # Shuffle the flux values to randomize their assignment to points
+        if self.flux_list is not None:
+            flux_values = self.flux_list
+        else:
+            flux_values = np.zeros(self.n_points)
+            start_idx = 0
+            for i in range(len(self.flux_bin_edges) - 1):
+                num_points_in_bin = int(self.flux_hist[i])
+                if num_points_in_bin > 0:
+                    # Generate random flux values within the current bin
+                    bin_flux_values = np.random.uniform(self.flux_bin_edges[i], self.flux_bin_edges[i + 1], num_points_in_bin)
+                    # Correctly place the generated fluxes into the main array
+                    flux_values[start_idx : start_idx + num_points_in_bin] = bin_flux_values
+                    start_idx += num_points_in_bin
+            # Shuffle the flux values to randomize their assignment to points
         np.random.shuffle(flux_values)
         return x, y, z, flux_values
     
@@ -129,7 +134,7 @@ class run:
         
 
 class checks:
-    def __init__(self, x, y, z, imsize, image, r, exp, flux_histogram, flux_bin_edges, **kwargs):
+    def __init__(self, x, y, z, imsize, image, r, exp, flux_values, flux_histogram, flux_bin_edges, **kwargs):
         self.x = x
         self.y = y
         self.z = z
@@ -137,6 +142,7 @@ class checks:
         self.image = image
         self.r = r
         self.exp = exp
+        self.flux_values = flux_values
         self.flux_hist = flux_histogram
         self.flux_bin_edges = flux_bin_edges
         self.__dict__.update(kwargs)
@@ -251,8 +257,12 @@ class checks:
         ax.tick_params('both', labelsize = 12)
         ax.set_xlabel('Flux [Jy]', fontsize = 16)
         ax.set_ylabel('Number of sources', fontsize = 16)
+        ax.set_xlim(0, 0.02)
+        ax.hist(self.flux_values, bins=300, 
+                color='red', edgecolor='k', alpha=0.7, label='Generated Distribution')
         ax.hist(self.flux_bin_edges[:-1], bins = self.flux_bin_edges, weights = self.flux_hist, \
-                color = 'royalblue', edgecolor = 'k', alpha = 0.75)
+                color = 'royalblue', edgecolor = 'k', alpha = 0.75, label = 'Target distribution')
+        ax.legend()
         if save:
             plt.savefig('flux_histogram.png', dpi = 300, bbox_inches = 'tight')
         plt.close()
@@ -301,7 +311,9 @@ scale = float(variables['scale'])          # Conversion scale in kpc/"
 save = int(variables['save'])
 save_exp = int(variables['save_exp'])
 outname = variables['output']
-    
+list = int(variables['list'])              # If 1 use the flux list
+rms = float(variables['rms']) * 1e-6       # RMS in Jy/beam
+
 # opens the fits file to get the header and pixsize
 filename = dir_img + '/' + name + '.fits'
 try:
@@ -314,19 +326,30 @@ except FileNotFoundError:
 except KeyError:
     logger.error(f"CDELT2 not found in FITS header of {filename}")
 
-
-flux_histogram = np.array([200, 150, 50, 25, 15, 10, 5, 5, 1])
-flux_bin_edges = np.linspace(1e-5, 20, len(flux_histogram) + 1) * 1e-3  # Flux bin edges in mJy
-n_points = np.sum(flux_histogram)    # Total number of points to generate
-logger.info(f"Total number of points to generate: {n_points}")
+flux = None
+if not list:
+    logger.info("Generating flux histogram from scratch...")
+    flux_histogram = np.array([200, 175, 100, 75, 50, 25, 15, 5, 2, 2, 1])
+    flux_bin_edges = np.linspace(1e-5, 20, len(flux_histogram) + 1) * 1e-3  # Flux bin edges in mJy
+    n_points = np.sum(flux_histogram)    # Total number of points to generate
+    logger.info(f"Total number of points to generate: {n_points}")
+    logger.info(f"The flux bins are: \n{flux_bin_edges*1e3} mJy")
+else:
+    logger.info("Using flux list from CSV file...")
+    data = pd.read_csv('./flux_list.csv', header=0)
+    flux = data['Flux'].values * rms
+    n_points = len(flux)
+    flux_histogram, flux_bin_edges = np.histogram(flux, bins = 50, range = (0, np.max(flux)), density = False)
+    logger.info(f"Total number of points to generate: {n_points}")
+    logger.info(f"The flux bins are: \n{flux_bin_edges} * 1e3 mJy")
 
 
 # Generate the sphere
 r = r / scale / pixsize                   # Convert radius to pixels 
 re = re / scale / pixsize                 # Effective radius in pixels
 I0 = I0 * pixsize**2                      # Convert I0 to Jy/pixel for the model
-sphere = run(n_points, r, I0, re, imsize, flux_histogram, flux_bin_edges)
-x, y, z, image = sphere()
+sphere = run(n_points, r, I0, re, imsize, flux_histogram, flux_bin_edges, flux_list = flux)
+x, y, z, image, flux_values = sphere()
 fluxes = sphere.flux_calc(image)          # Estimate the total flux in the image
 logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
 
@@ -360,7 +383,7 @@ os.chdir(dir_work)
 
 # Check the distribution of points
 os.chdir(dir_plots)
-c = checks(x, y, z, imsize, image, r, exp2d, flux_histogram, flux_bin_edges)
+c = checks(x, y, z, imsize, image, r, exp2d, flux_values, flux_histogram, flux_bin_edges, flux_list = flux)
 c.show_image(save = save)
 if n_points < 10000:
     c.plot3d(save = save)
