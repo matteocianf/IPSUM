@@ -62,9 +62,9 @@ class run:
       return x, y, z, image, flux_values
     
    def generate_sphere(self):
-   ''' 
-   Generates a uniform distribution of points in the volume of a sphere
-   '''
+      ''' 
+      Generates a uniform distribution of points in the volume of a sphere
+      '''
       if self.ra is None and self.dec is None:
          theta = np.arccos(2 * np.random.uniform(0, 1, self.n_points) - 1)
          phi   = 2 * np.pi * np.random.uniform(0, 1, self.n_points)
@@ -74,10 +74,10 @@ class run:
          y = rho * np.sin(theta) * np.sin(phi)
          z = rho * np.cos(theta)
       else:
-         if wcs is not None:
+         if self.wcs is not None:
             pix_coords = self.wcs.all_world2pix(self.ra, self.dec, 0)
             x_pix, y_pix = pix_coords
-         else;
+         else:
             x_pix = self.ra
             y_pix = self.dec
          logger.info("Using provided RA and Dec coordinates for point generation.")
@@ -102,9 +102,9 @@ class run:
       return x, y, z, flux_values
     
    def generate_exponential(self, pixsize):
-   '''
-   Generates a continuum distribution following a 2D exponential profile
-   '''
+      '''
+      Generates a continuum distribution following a 2D exponential profile
+      '''
       X      = np.linspace(0, self.imsize, self.imsize)
       x, y   = np.meshgrid(X, X)
       radius = np.sqrt((x - self.center[1])**2 + (y - self.center[0])**2)
@@ -113,9 +113,9 @@ class run:
       return I
 
    def generate_image(self, x, y, flux_values):
-   '''
-   Generates a 2D image from the 3D points projected onto a 2D plane
-   '''
+      '''
+      Generates a 2D image from the 3D points projected onto a 2D plane
+      '''
       image = np.zeros((self.imsize, self.imsize))
       # Convert the 2D coordinates to pixel indices
       x_pixel = (x + self.center[0]).astype(int)
@@ -134,17 +134,17 @@ class run:
       return image
         
    def flux_calc(self, image):
-   '''
-   Computes the total flux in the image
-   '''
+      '''
+      Computes the total flux in the image
+      '''
       total_flux = np.sum(image)
       return total_flux
     
    def flux_exp(self, f = 0.8):
-   '''
-   Computes the flux of the exponential profile up to 3re (f = 0.8)
-   I0 in Jy/arcsec^2, re in arcsec
-   '''
+      '''
+      Computes the flux of the exponential profile up to 3re (f = 0.8)
+      I0 in Jy/arcsec^2, re in arcsec
+      '''
       re   = self.re * pixsize  # Convert re to arcsec
       I0   = self.I0            # Central brightness in Jy/arcsec^2
       flux = 2 * np.pi * I0/pixsize**2 * re**2 * f
@@ -166,9 +166,9 @@ class checks:
       self.__dict__.update(kwargs)
 
    def show_image(self, cmap = 'cubehelix', save = False):
-   '''
-   Shows the image of the sphere projection
-   '''
+      '''
+      Shows the image of the sphere projection
+      '''
       fig = plt.figure(figsize = (8, 8))
       ax  = fig.add_subplot(111)
       ax.tick_params('both', labelsize = 12)
@@ -183,9 +183,9 @@ class checks:
       plt.close()
         
    def plot3d(self, color = 'royalblue', s = 1, save = False):
-   '''
-   Shows the 3D plot of the sphere
-   '''
+      '''
+      Shows the 3D plot of the sphere
+      '''
       fig = plt.figure(figsize = (8, 8))
       ax  = fig.add_subplot(111, projection = '3d')
       limits = self.imsize/2
@@ -203,9 +203,9 @@ class checks:
       plt.close()
 
    def show_dist(self, c = 'royalblue', bins = 10, save = False):
-   '''
-   Shows the histogram of the density of points in the prpjected image
-   '''
+      '''
+      Shows the histogram of the density of points in the prpjected image
+      '''
       distances = np.hypot(self.x, self.y)        # distances from the center
       counts, bin_edges = np.histogram(distances, bins = bins, range = (0, self.r))
       # Calculate the area of each circular shell in 2D
@@ -232,9 +232,9 @@ class checks:
       plt.close()
 
    def exp2d_image(self, cmap = 'cubehelix', save = False):
-   '''
-   Shows the 2D exponential profile
-   '''
+      '''
+      Shows the 2D exponential profile
+      '''
       fig = plt.figure(figsize = (8, 8))
       ax  = fig.add_subplot(111)
       ax.tick_params('both', labelsize = 12)
@@ -249,9 +249,9 @@ class checks:
       plt.close()
         
    def sources_and_exp(self, cmap = 'cubehelix', save = False):
-   '''
-   Shows the 2D image with the sources and the exponential profile
-   '''
+      '''
+      Shows the 2D image with the sources and the exponential profile
+      '''
       img     = self.image + self.exp  # Combine the image and the exponential profile
       fig, ax = plt.subplots(figsize = (8, 8))
       ax.tick_params('both', labelsize = 12)
@@ -266,9 +266,9 @@ class checks:
       plt.close()
         
    def show_flux_histogram(self, save = False):
-   '''
-   Shows the histogram of the flux values
-   '''
+      '''
+      Shows the histogram of the flux values
+      '''
       fig = plt.figure(figsize = (8, 8))
       ax  = fig.add_subplot(111)
       ax.tick_params('both', labelsize = 12)
@@ -312,9 +312,9 @@ try:
          line = line.strip()                        # Removes spaces and newlines
          if not line or line.startswith('#'):       # Skip empty lines or comments
             continue
-            if '=' in line:
-               key, value = line.split('=', 1)        # Splits on the first '='
-               variables[key.strip()] = value.strip() # adds to the dictionary
+         if '=' in line:
+            key, value = line.split('=', 1)        # Splits on the first '='
+            variables[key.strip()] = value.strip() # adds to the dictionary
 except FileNotFoundError:
    logger.error(f"Parset file not found at {parset}")# Exit if parset file is missing
             
@@ -339,9 +339,9 @@ try:
       header  = hdul[0].header
       pixsize = abs(header['CDELT2']) * 3600  # from deg to arcsec
       imsize  = header['NAXIS1']               # Assuming square image, NAXIS1 == NAXIS2
-      if coord == 'deg'
-         wcs     = WCS(header)
-         wcs     = wcs.dropaxis(-1).dropaxis(-1)
+      if coord == 'deg':
+         wcs = WCS(header)
+         wcs = wcs.dropaxis(-1).dropaxis(-1)
       else:
          wcs = None
 except FileNotFoundError:
@@ -368,7 +368,7 @@ else:
     # Check if RA and Dec columns exist before reading them
    if 'RA' in data.columns and 'Dec' in data.columns:
       logger.info("RA and Dec columns found in CSV file.")
-      ra = data['RA'].values
+      ra  = data['RA'].values
       dec = data['Dec'].values
    else:
       logger.warning("RA and Dec columns not found in CSV. Positions will be generated randomly.")
@@ -390,7 +390,7 @@ logger.info(f"Flux of the exponential profile up to 3re: {flux_exp*1e3:.0f} mJy"
 
 os.chdir(dir_img)
 output = f'{outname}-model.fits'
-hdu = fits.PrimaryHDU(image, header)
+hdu    = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
 try:
    hdu.writeto(output, overwrite = True)
