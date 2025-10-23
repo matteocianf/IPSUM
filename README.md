@@ -7,7 +7,11 @@ The current requirements are:
 numpy
 astropy
 matplotlib
+casacore
+pandas
 losito (and dependences therein)
+wsclean
+DP3
 ```
 
 This pipeline can be run inside the [flocs]{https://github.com/tikk3r/flocs} container if you want to avoid installing the libraries on your machine.
