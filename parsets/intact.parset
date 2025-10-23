@@ -1,9 +1,10 @@
-r = 1300
+r = 1124
 save = 1
-name = test
-scale = 2.9
-output = test_model
-I0 = 9e-6
-re = 130
+name = noise_img/A2244_synth_noise-MFS-model
+scale = 1.762
+output = inj_sources
+I0 = 2.78e-6
+re = 128
 save_exp = 1
-coord = deg
+list = 1
+rms = 40
