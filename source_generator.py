@@ -10,6 +10,7 @@ import logging
 import numpy as np
 import pandas as pd
 from astropy.io import fits
+from astropy.wcs import WCS
 import matplotlib.pyplot as plt
 
 
@@ -39,7 +40,7 @@ def directory(directory):
 
 
 class run:
-    def __init__(self, n_points, r, I0, re, imsize, flux_hist, flux_bin_edges, flux_list = None):
+    def __init__(self, n_points, r, I0, re, imsize, flux_hist, flux_bin_edges, flux_list = None, ra = None, dec = None, wcs = None):
         self.n_points = n_points
         self.r = r
         self.I0 = I0
@@ -48,6 +49,9 @@ class run:
         self.flux_hist = flux_hist
         self.flux_bin_edges = flux_bin_edges
         self.flux_list = flux_list
+        self.ra = ra
+        self.dec = dec
+        self.wcs = wcs
         self.center = np.array([imsize / 2, imsize / 2])  # (x,y) coordinates of the center of the image
         
     def __call__(self):
@@ -61,14 +65,29 @@ class run:
         ''' 
         Generates a uniform distribution of points in the volume of a sphere
         '''
-        theta = np.arccos(2 * np.random.uniform(0, 1, self.n_points) - 1)
-        phi = 2 * np.pi * np.random.uniform(0, 1, self.n_points)
-        rho = self.r * np.cbrt(np.random.uniform(0, 1, self.n_points))  # Scale to the radius of the sphere
-        # Convert spherical coordinates to Cartesian coordinates
-        x = rho * np.sin(theta) * np.cos(phi)
-        y = rho * np.sin(theta) * np.sin(phi)
-        z = rho * np.cos(theta)
-
+        if self.ra is None and self.dec is None:
+            theta = np.arccos(2 * np.random.uniform(0, 1, self.n_points) - 1)
+            phi = 2 * np.pi * np.random.uniform(0, 1, self.n_points)
+            rho = self.r * np.cbrt(np.random.uniform(0, 1, self.n_points))  # Scale to the radius of the sphere
+            # Convert spherical coordinates to Cartesian coordinates
+            x = rho * np.sin(theta) * np.cos(phi)
+            y = rho * np.sin(theta) * np.sin(phi)
+            z = rho * np.cos(theta)
+        else:
+            logger.info("Using provided RA and Dec coordinates for point generation.")
+            pix_coords = self.wcs.all_world2pix(self.ra, self.dec, 0)
+            x_pix, y_pix = pix_coords
+            # x_pix = self.ra
+            # y_pix = self.dec
+            
+            print(x_pix[-1], y_pix[-1])
+            
+            x = x_pix - self.center[0]
+            y = y_pix - self.center[1]
+            # x = x_pix
+            # y = y_pix
+            z = np.zeros_like(x)  # z-coordinates are zero for a 2D projection
+            
         if self.flux_list is not None:
             flux_values = self.flux_list
         else:
@@ -83,7 +102,7 @@ class run:
                     flux_values[start_idx : start_idx + num_points_in_bin] = bin_flux_values
                     start_idx += num_points_in_bin
             # Shuffle the flux values to randomize their assignment to points
-        np.random.shuffle(flux_values)
+        # np.random.shuffle(flux_values)
         return x, y, z, flux_values
     
     def generate_exponential(self, pixsize):
@@ -105,14 +124,17 @@ class run:
         # Convert the 2D coordinates to pixel indices
         x_pixel = (x + self.center[0]).astype(int)
         y_pixel = (y + self.center[1]).astype(int)
+        
         valid_mask = (x_pixel >= 0) & (x_pixel < self.imsize) & \
                      (y_pixel >= 0) & (y_pixel < self.imsize)
         # Filter the coordinates
         x_pixel_valid = x_pixel[valid_mask]
         y_pixel_valid = y_pixel[valid_mask]
+        flux_values_valid = flux_values[valid_mask]
+
         # Add flux to the image at valid pixel locations.
         # np.add.at handles cases where multiple points map to the same pixel by summing.
-        np.add.at(image, (y_pixel_valid, x_pixel_valid), flux_values)
+        np.add.at(image, (y_pixel_valid, x_pixel_valid), flux_values_valid)
         return image
         
     def flux_calc(self, image):
@@ -321,34 +343,43 @@ try:
         header = hdul[0].header
         pixsize = abs(header['CDELT2']) * 3600  # from deg to arcsec
         imsize = header['NAXIS1']               # Assuming square image, NAXIS1 == NAXIS2
+        wcs = WCS(header)
+        wcs = wcs.dropaxis(-1).dropaxis(-1)
 except FileNotFoundError:
     logger.error(f"Input FITS file not found at {filename}")
 except KeyError:
     logger.error(f"CDELT2 not found in FITS header of {filename}")
 
-flux = None
+flux = None; ra = None; dec = None
 if not list:
     logger.info("Generating flux histogram from scratch...")
-    flux_histogram = np.array([200, 175, 100, 75, 50, 25, 15, 5, 2, 2, 1])
-    flux_bin_edges = np.linspace(1e-5, 20, len(flux_histogram) + 1) * 1e-3  # Flux bin edges in mJy
+    flux_histogram = np.array([150])
+    flux_bin_edges = np.linspace(3, 3, len(flux_histogram) + 1) * rms 
     n_points = np.sum(flux_histogram)    # Total number of points to generate
     logger.info(f"Total number of points to generate: {n_points}")
     logger.info(f"The flux bins are: \n{flux_bin_edges*1e3} mJy")
 else:
     logger.info("Using flux list from CSV file...")
-    data = pd.read_csv('./flux_list.csv', header=0)
+    data = pd.read_csv('./flux_list.csv', header = 0, sep = ' ')
     flux = data['Flux'].values * rms
     n_points = len(flux)
     flux_histogram, flux_bin_edges = np.histogram(flux, bins = 50, range = (0, np.max(flux)), density = False)
     logger.info(f"Total number of points to generate: {n_points}")
     logger.info(f"The flux bins are: \n{flux_bin_edges} * 1e3 mJy")
+    # Check if RA and Dec columns exist before reading them
+    if 'RA' in data.columns and 'Dec' in data.columns:
+        logger.info("RA and Dec columns found in CSV file.")
+        ra = data['RA'].values
+        dec = data['Dec'].values
+    else:
+        logger.warning("RA and Dec columns not found in CSV. Positions will be generated randomly.")
 
 
 # Generate the sphere
 r = r / scale / pixsize                   # Convert radius to pixels 
 re = re / scale / pixsize                 # Effective radius in pixels
 I0 = I0 * pixsize**2                      # Convert I0 to Jy/pixel for the model
-sphere = run(n_points, r, I0, re, imsize, flux_histogram, flux_bin_edges, flux_list = flux)
+sphere = run(n_points, r, I0, re, imsize, flux_histogram, flux_bin_edges, flux_list = flux, ra = ra, dec = dec, wcs = wcs)
 x, y, z, image, flux_values = sphere()
 fluxes = sphere.flux_calc(image)          # Estimate the total flux in the image
 logger.info(f"Total flux in the image: {fluxes*1e3} mJy")
