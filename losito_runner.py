@@ -39,6 +39,7 @@ logger.info(f"Backup MS directory: {dir_mss_bkp}")
 logger.info(f"Parsets directory: {dir_parsets}")
 
 if not os.path.exists(dir_mss):
+    logger.info(f"Directory {dir_mss} not found, creating it...")
     os.mkdir(dir_mss)
     logger.info(f"Directory {dir_mss} created")
 else:
@@ -83,7 +84,8 @@ if not only_add_col:
     logger.info(f"Running command: {cmd}")
     os.system(cmd)
 
-    if not os.path.exists(dir_mss):
+    if not os.path.exists(dir_mss_bkp):
+        logger.info(f"Creating backup directory: {dir_mss_bkp}")
         copy_cmd = f'cp -r {dir_mss} {dir_mss_bkp}'
         os.system(copy_cmd)
         logger.info(f"Backup directory {dir_mss_bkp} created")
