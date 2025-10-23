@@ -27,10 +27,10 @@ logger.addHandler(console_handler)
 
 logger.info("Starting losito_runner script...")
 
-dir_work = os.getcwd()
-dir_mss = os.path.join(dir_work, 'mss')
-dir_mss_bkp = os.path.join(dir_work, 'mss-bkp')
-dir_parsets = os.path.join(dir_work, 'parsets')
+dir_work       = os.getcwd()
+dir_mss        = os.path.join(dir_work, 'mss')
+dir_mss_bkp    = os.path.join(dir_work, 'mss-bkp')
+dir_parsets    = os.path.join(dir_work, 'parsets')
 synthms_parset = os.path.join(dir_parsets, 'synthms.parset')
 
 logger.info(f"Working directory: {dir_work}")
@@ -57,21 +57,21 @@ except FileNotFoundError:
     # Exit if parset file is missing
             
 # Parameters
-name = variables['name']
-tobs = float(variables['tobs'])                  # observation time in hours
-station = variables['station']                   # HBA, LBA or both
-minfreq = float(variables['minfreq'])            # minimum frequency in MHz
-maxfreq = float(variables['maxfreq'])            # maximum frequency in MHz
+name         = variables['name']
+tobs         = float(variables['tobs'])                  # observation time in hours
+station      = variables['station']                   # HBA, LBA or both
+minfreq      = float(variables['minfreq'])            # minimum frequency in MHz
+maxfreq      = float(variables['maxfreq'])            # maximum frequency in MHz
 lofarversion = int(variables['lofarversion'])    # LOFAR version, 1 or 2
-chanpersb = int(variables['chanpersb'])          # channels per subband
-tres = float(variables['tres'])                  # time resolution in seconds
-start = float(variables['start']) * 3600 * 24    # start time in MJD
-ra = float(variables['ra'])                      # RA in degrees
-dec = float(variables['dec'])                    # DEC in degrees
-remove_SB = int(variables['remove_last_SB'])    # remove last subband
+chanpersb    = int(variables['chanpersb'])          # channels per subband
+tres         = float(variables['tres'])                  # time resolution in seconds
+start        = float(variables['start']) * 3600 * 24    # start time in MJD
+ra           = float(variables['ra'])                      # RA in degrees
+dec          = float(variables['dec'])                    # DEC in degrees
+remove_SB    = int(variables['remove_last_SB'])    # remove last subband
 only_add_col = int(variables['only_add_col'])   # only add columns to MS
 
-ra = math.radians(ra)
+ra  = math.radians(ra)
 dec = math.radians(dec)
 
     
@@ -123,9 +123,9 @@ if not only_add_col:
 else:
     logging.info("Only adding columns to existing MS, skipping synthesis and injection steps.")
 
-ms = os.path.join(dir_mss, name)
-cols = ['inj', 'inj_exp', 'sub']
-ts  = pt.table(ms, readonly=False)
+ms       = os.path.join(dir_mss, name)
+cols     = ['inj', 'inj_exp', 'sub']
+ts       = pt.table(ms, readonly=False)
 colnames = ts.colnames()
 ts.close()   
 for col in cols:
