@@ -93,14 +93,14 @@ if not only_add_col:
     losito_run = f'losito {dir_parsets}/losito.parset >log_losito.txt'
     logger.info(f"Running losito with command: {losito_run}")
     os.system(losito_run)
-
+    
     if remove_SB:
         num = []
         for file in os.listdir(dir_mss):
             if file.endswith('.MS'):
-                match = re.search(r'\d+', file)
+                match = re.search(r'(\d+)\.MS$', file)
                 if match:
-                    num.append(int(match.group()))
+                    num.append(int(match.group(1)))
                 else:
                     logger.warning(f"No number found in file name: {file}")
         last_sb = max(num) if num else None
