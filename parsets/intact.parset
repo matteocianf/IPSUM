@@ -6,3 +6,4 @@ output = test_model
 I0 = 9e-6
 re = 130
 save_exp = 1
+coord = deg
