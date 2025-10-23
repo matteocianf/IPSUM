@@ -10,53 +10,75 @@ matplotlib
 losito (and dependences therein)
 ```
 
-This pipeline can be run inside the `flocs` or `PiLL` containers if you want to avoid installing the libraries on your machine.
-This pipeline works by generating an empty LOFAR image with only noise in it using LoSiTo and then injecting in its MODEL_DATA column a uniform 3d distribution of sources (then projected into the 2d plane). Then the image can be produced with WSClean or other softwares for radio imaging.
-The parameters are inputted via a file called `intact.parset`, there is an example file in the repo. It is important to notice that the imsize for the model must be the same as the input model imaged after the LoSiTo run.
-To create the empty MS file you have to run `lositosynthms_runner.py` and change the parameters in the `synthms.parset`, or, if you want you can run synthms as command line from the terminal after installing it.
-Remember to put the MS file in the `/mss` folder.
-The script now can produce also a 2D exponential profile to simulate a radio halo.
-All the parset files are located in the direcotry `parsets`, copy it into your working directory or the program won't work.
+This pipeline can be run inside the [flocs]{https://github.com/tikk3r/flocs} container if you want to avoid installing the libraries on your machine.
+This pipeline works by generating an empty LOFAR image with only noise in it using [LoSiTo]{https://github.com/darafferty/losito} and then injecting in the visibilities a distribution of sources. Then the image can be produced with WSClean or other softwares for radio imaging.
+The distribution can be given through a CSV with also the coordinates of the points or randomly generated with a uniform flux distribution, the edges of the distribution must be specified and also the number of sources. (I'm working to make this easier as for now the parameters must be modifed inside the code instead of a parset)
+The parameters for the different scripts are given via `parsets`, examples of these are found in the `parsets` directory.
+Before running the injector you need to create an empty image with only noise (I'm working on automating this, too).
+
+The first step is to run `losito_runner.py` to generate the `MS` file, by default it only adds noise in the visibilities, to do more complex operations I recommend to look at the wiki of LoSiTo and modify the parset based on it.
+After this, create the image with only noise.
+To create the sources model run `source_generator.py`.
+To inject the models and create the images run `pred_inj.py`.
 
 ## Output
 
 If you choose to save the output of `source_generator.py` you will find the plots saved in the directory `/plots`.
 Some parameters of these plots can be changed from the script itself (colors, color maps, display the theoretical relation for the histogram).
-Some examples of the plots are shown below.
-![2D projection of the 3D uniform distribution of points in the sphere.](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_projection.png)
-![3D distribution of points inside the sphere](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_3d.png)
-![Histogram of the density of points in function of the radius of the sphere](https://github.com/matteocianf/INTACT/blob/main/examples/sphere_density_2d.png)
-![2D exponential](https://github.com/matteocianf/INTACT/blob/main/examples/exponential_profile.png)
-![2D exponential with point sources superimposed](https://github.com/matteocianf/INTACT/blob/main/examples/sources_and_exp.png)
 
 ## Parsets
 
 The pipeline works through the use of parset files.
 
-The settings for `intact.parset` are:
+### losito_runner.py
 
-+ `npoints`, which is the number of point sources to generate;
-+ `r`, radius of the sphere over which you want to distribute the sources, must be expressed in kpc;
-+ `imsize`, size of the image in pixels, must be equal to the size of the empty image;
-+ `flux`, flux, in Jy, of each point source;
-+ `save`, option to save the plots;
-+ `name`, name of the fits file to open (the one from which you take the header - or the one in which you inject this model);
-+ `scale`, scale in kpc/" for the object to simulate, this depends on the redshift;
-+ `output`, name of the output model;
-+ `I0`, central brightness of the exponential profile;
-+ `re`, effective radius of the exponential;
-+ `save_exp`, to save as a `fits` image the exponential image.
+For LoSiTo different parsets are used.
 
-For `synthms.parset` the settings are:
+#### synthms.parset
 
-+ `name`, name of the output MS file;
+The parameters here are:
+
++ `name`, sets the name of the output `MS` file, no need to add `.MS` in the name;
 + `tobs`, observation time in hours;
 + `station`, LOFAR station to use, can be `HBA`, `LBA` or `both`;
 + `minfreq`, lowest frequency of the observation in MHz (the code will convert in Hz);
 + `maxfreq`, highest frequency of the observation in MHz (the code will convert in Hz);
-+ `lofarversion`, `1` for current version of LOFAR, `2` for the upgraded one;
++ `lofarversion`, `1` for current version of LOFAR, `2` for LOFAR2.0;
 + `ra`, RA of the target in deg (the code will convert in rad);
 + `dec`, Dec of the target in deg (the code will convert in rad);
 + `chanpersb`, number of channels per sub-band;
 + `tres`, integration time, or time resolution of the MS, in seconds;
 + `start`, start time of the observation in MJD.
+
+#### dp3_freqavg.parset
+
+DP3 parset to average in frequency the initial `MS` file.
+
+#### losito.parset
+
+LoSiTo parset to add noise and corruptions to the `MS` file.
+Look at LoSiTo documentation for more information.
+
+#### intact.parset
+
+Parset used for the creation of point sources model and radio halo model:
+
++ `r`, radius of the sphere over which you want to distribute the sources, must be expressed in kpc;
++ `save`, option to save the plots (either 1 (True) or 0 (False));
++ `name`, name of the fits image with only noise;
++ `scale`, scale in kpc/" for the object to simulate, this depends on the redshift;
++ `output`, name of the output model;
++ `I0`, central brightness of the exponential profile, expressed in $Jy/arcsec^2$;
++ `re`, effective radius of the exponential in kpc;
++ `save_exp`, to save as a `fits` image the exponential;
++ `list`, activate if you want to use a source flux list (either 1 (True) or 0 (False));
++ `coord`, select the type of coordinates for the sources.
+
+#### inj.parset
+
+To select the parameters for injection, source subtraction and imaging:
+
++ `mssname`, name of the `MS` file for imaging;
++ `name`, name of the cluster or target;
++ `only_sub`, to only do the subtraction step;
++ `minuv_sub`, to select the inner uv-cut.
