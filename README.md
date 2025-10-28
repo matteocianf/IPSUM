@@ -63,6 +63,8 @@ DP3 parset to average in frequency the initial `MS` file.
 LoSiTo parset to add noise and corruptions to the `MS` file.
 Look at LoSiTo documentation for more information.
 
+### source_generator.py
+
 #### intact.parset
 
 Parset used for the creation of point sources model and radio halo model:
@@ -77,6 +79,8 @@ Parset used for the creation of point sources model and radio halo model:
 + `save_exp`, to save as a `fits` image the exponential;
 + `list`, activate if you want to use a source flux list (either 1 (True) or 0 (False));
 + `coord`, select the type of coordinates for the sources.
+
+### pred_inj.py
 
 #### inj.parset
 
