@@ -79,6 +79,8 @@ Parset used for the creation of point sources model and radio halo model:
 + `save_exp`, to save as a `fits` image the exponential;
 + `list`, activate if you want to use a source flux list (either 1 (True) or 0 (False));
 + `coord`, select the type of coordinates for the sources.
++ `distribution`, choose between flat and sphere, both uniform distribution but one is uniform in a 3D sphere and one in a 2D disk;
++ `density`, you can specify the density of the points per arcmin^2 instead of letting the code generate a fixed number of points.
 
 ### pred_inj.py
 
