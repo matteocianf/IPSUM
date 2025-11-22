@@ -25,9 +25,20 @@ console_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
+
+def directory(dir):
+   if not os.path.exists(dir):
+      os.mkdir(dir)
+      logger.info(f"Directory {dir} created")
+   else:
+      logger.info(f"Directory {dir} already exists")
+
+
 logger.info("Starting losito_runner script...")
 
 dir_work       = os.getcwd()
+dir_img        = os.path.join(dir_work, 'img')
+dir_noise_img  = os.path.join(dir_img, 'noise_img')
 dir_mss        = os.path.join(dir_work, 'mss')
 dir_mss_bkp    = os.path.join(dir_work, 'mss-bkp')
 dir_parsets    = os.path.join(dir_work, 'parsets')
@@ -38,12 +49,9 @@ logger.info(f"MS directory: {dir_mss}")
 logger.info(f"Backup MS directory: {dir_mss_bkp}")
 logger.info(f"Parsets directory: {dir_parsets}")
 
-if not os.path.exists(dir_mss):
-    logger.info(f"Directory {dir_mss} not found, creating it...")
-    os.mkdir(dir_mss)
-    logger.info(f"Directory {dir_mss} created")
-else:
-    logger.info(f"Directory {dir_mss} already exists")
+directory(dir_mss)
+directory(dir_img)
+directory(dir_noise_img)
 
 try:
     with open(synthms_parset, 'r') as file:
@@ -58,21 +66,21 @@ except FileNotFoundError:
     # Exit if parset file is missing
             
 # Parameters
-name         = variables['name']
-tobs         = float(variables['tobs'])                  # observation time in hours
-station      = variables['station']                   # HBA, LBA or both
-minfreq      = float(variables['minfreq'])            # minimum frequency in MHz
-maxfreq      = float(variables['maxfreq'])            # maximum frequency in MHz
+name = variables['name']
+tobs = float(variables['tobs'])                  # observation time in hours
+station = variables['station']                   # HBA, LBA or both
+minfreq = float(variables['minfreq'])            # minimum frequency in MHz
+maxfreq = float(variables['maxfreq'])            # maximum frequency in MHz
 lofarversion = int(variables['lofarversion'])    # LOFAR version, 1 or 2
-chanpersb    = int(variables['chanpersb'])          # channels per subband
-tres         = float(variables['tres'])                  # time resolution in seconds
-start        = float(variables['start']) * 3600 * 24    # start time in MJD
-ra           = float(variables['ra'])                      # RA in degrees
-dec          = float(variables['dec'])                    # DEC in degrees
-remove_SB    = int(variables['remove_last_SB'])    # remove last subband
+chanpersb = int(variables['chanpersb'])          # channels per subband
+tres = float(variables['tres'])                  # time resolution in seconds
+start = float(variables['start']) * 3600 * 24    # start time in MJD
+ra = float(variables['ra'])                      # RA in degrees
+dec = float(variables['dec'])                    # DEC in degrees
+remove_SB = int(variables['remove_last_SB'])    # remove last subband
 only_add_col = int(variables['only_add_col'])   # only add columns to MS
 
-ra  = math.radians(ra)
+ra = math.radians(ra)
 dec = math.radians(dec)
 
     
@@ -95,7 +103,7 @@ if not only_add_col:
     losito_run = f'losito {dir_parsets}/losito.parset >log_losito.txt'
     logger.info(f"Running losito with command: {losito_run}")
     os.system(losito_run)
-    
+
     if remove_SB:
         num = []
         for file in os.listdir(dir_mss):
@@ -125,9 +133,9 @@ if not only_add_col:
 else:
     logging.info("Only adding columns to existing MS, skipping synthesis and injection steps.")
 
-ms       = os.path.join(dir_mss, name)
-cols     = ['inj', 'inj_exp', 'sub']
-ts       = pt.table(ms, readonly=False)
+ms = os.path.join(dir_mss, name)
+cols = ['inj', 'inj_exp', 'sub']
+ts  = pt.table(f'{ms}.MS', readonly=False)
 colnames = ts.colnames()
 ts.close()   
 for col in cols:
@@ -136,7 +144,7 @@ for col in cols:
         continue
     else:
         logger.info(f"Adding column '{col}' to MS: {name}")
-        cmd = f'DP3 msin={ms} msout=. steps=[] msout.datacolumn={col} \
+        cmd = f'DP3 msin={ms}.MS msout=. steps=[] msout.datacolumn={col} \
                 msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
         logger.info(f"Command to add column: {cmd}")
         os.system(cmd)
@@ -144,4 +152,20 @@ for col in cols:
 
 
 os.chdir(dir_work)
+
+
+os.chdir(dir_noise_img)
+logger.info("Creating first high resolution image...")
+
+cmd = f'wsclean -no-update-model-required -minuv-l 80 -size 1920 1920 \
+        -reorder -weight briggs -0.5 -fit-spectral-pol 3 -pol i \
+        -clean-border 1 -mgain 0.8 -fit-beam -data-column DATA \
+        -join-channels -channels-out 6 -padding 1.4 -multiscale \
+        -baseline-averaging 6.5554734525 -name A2244_synth_noise \
+        -scale 1.5arcsec -niter 15000 {ms} \
+        >log.txt'
+logger.info(f"Running imaging command: {cmd}")
+os.system(cmd)
+logger.info("First high resolution image created.")
+
 logger.info("losito_runner script completed successfully.")

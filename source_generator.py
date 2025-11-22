@@ -408,7 +408,7 @@ logger.info(f"Flux of the exponential profile up to 3re: {flux_exp*1e3:.0f} mJy"
 
 os.chdir(dir_img)
 output = f'{outname}-model.fits'
-hdu = fits.PrimaryHDU(image, header)
+hdu    = fits.PrimaryHDU(image, header)
 hdu.writeto(output, overwrite = True)
 try:
    hdu.writeto(output, overwrite = True)

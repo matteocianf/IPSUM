@@ -7,11 +7,15 @@ The current requirements are:
 numpy
 astropy
 matplotlib
+casacore
+pandas
 losito (and dependences therein)
+wsclean
+DP3
 ```
 
-This pipeline can be run inside the [flocs]{https://github.com/tikk3r/flocs} container if you want to avoid installing the libraries on your machine.
-This pipeline works by generating an empty LOFAR image with only noise in it using [LoSiTo]{https://github.com/darafferty/losito} and then injecting in the visibilities a distribution of sources. Then the image can be produced with WSClean or other softwares for radio imaging.
+This pipeline can be run inside the [flocs](https://github.com/tikk3r/flocs) container if you want to avoid installing the libraries on your machine.
+This pipeline works by generating an empty LOFAR image with only noise in it using [LoSiTo](https://github.com/darafferty/losito) and then injecting in the visibilities a distribution of sources. Then the image can be produced with WSClean or other softwares for radio imaging.
 The distribution can be given through a CSV with also the coordinates of the points or randomly generated with a uniform flux distribution, the edges of the distribution must be specified and also the number of sources. (I'm working to make this easier as for now the parameters must be modifed inside the code instead of a parset)
 The parameters for the different scripts are given via `parsets`, examples of these are found in the `parsets` directory.
 Before running the injector you need to create an empty image with only noise (I'm working on automating this, too).
@@ -59,6 +63,8 @@ DP3 parset to average in frequency the initial `MS` file.
 LoSiTo parset to add noise and corruptions to the `MS` file.
 Look at LoSiTo documentation for more information.
 
+### source_generator.py
+
 #### intact.parset
 
 Parset used for the creation of point sources model and radio halo model:
@@ -73,6 +79,8 @@ Parset used for the creation of point sources model and radio halo model:
 + `save_exp`, to save as a `fits` image the exponential;
 + `list`, activate if you want to use a source flux list (either 1 (True) or 0 (False));
 + `coord`, select the type of coordinates for the sources.
+
+### pred_inj.py
 
 #### inj.parset
 
