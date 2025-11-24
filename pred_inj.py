@@ -26,7 +26,7 @@ def directory(directory):
     logger.info(f"Directory {directory} already exists")
     
     
-def wsclean_cmd(minuv, size, briggs, datacol, name, scale, niter, ms, outname, mask = '', taper = 0):
+def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, outname, mask = ''):
     cmd = f'wsclean -no-update-model-required -minuv-l {minuv} -size {size} {size} \
             -reorder -weight briggs {briggs} \
             -clean-border 1 -mgain 0.8 -fit-beam -data-column {datacol} \
@@ -57,18 +57,18 @@ dir_shallow_img = os.path.join(dir_img, 'synth_shallow')
 dir_deep_img = os.path.join(dir_img, 'synth_deep')
 dir_exp_shallow = os.path.join(dir_img, 'synth_exp_shallow')
 dir_exp_deep = os.path.join(dir_img, 'synth_exp_deep')
-dir_exp_only_shallow = os.path.join(dir_img, 'synth_exp_only_shallow')
-dir_exp_only_deep = os.path.join(dir_img, 'synth_exp_only_deep')
 dir_sub_shallow = os.path.join(dir_img, 'sub_shallow')
 dir_sub_deep = os.path.join(dir_img, 'sub_deep')
 dir_uvcut_shallow = os.path.join(dir_img, 'uvcut_shallow')
 dir_uvcut_deep = os.path.join(dir_img, 'uvcut_deep')
 dir_halo_hr_shallow = os.path.join(dir_img, 'halo_hr_shallow')
 dir_halo_hr_deep = os.path.join(dir_img, 'halo_hr_deep')
+dir_halo_lr_shallow = os.path.join(dir_img, 'halo_lr_shallow')
+dir_halo_lr_deep = os.path.join(dir_img, 'halo_lr_deep')
 
 dirs_to_create = [dir_shallow_img, dir_deep_img, dir_exp_shallow, dir_exp_deep,
                 dir_sub_shallow, dir_sub_deep, dir_uvcut_shallow, dir_uvcut_deep,
-                dir_halo_hr_shallow, dir_halo_hr_deep, dir_exp_only_shallow, dir_exp_only_deep]
+                dir_halo_hr_shallow, dir_halo_hr_deep]
 for d in dirs_to_create:
     directory(d)
 
@@ -92,8 +92,71 @@ minuv_sub = int(variables['minuv_sub'])
 ms = os.path.join(dir_mss, mss_name)
 #### Imaging
 ### only discrete sources image
+
+
+ts  = pt.table(f'{ms}', readonly=False)
+colnames = ts.colnames()
+ts.close()   
+if 'exponential' in colnames:
+    logger.info(f"Column 'exponential' already exists in MS: {name}")
+else:
+    logger.info(f"Adding column 'exponential' to MS: {name}")
+    cmd = f'DP3 msin={ms}.MS msout=. steps=[] msout.datacolumn=exponential \
+            msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
+    logger.info(f"Command to add column: {cmd}")
+    os.system(cmd)
+    logger.info(f"Column 'exponential' added to MS: {name}") 
+
+logger.info(f"Injecting exponential in a single column")
+predict_cmd = f'wsclean -predict -name {dir_img}/exponential {dir_mss}/{mss_name} \
+                >log_predict_exponential.txt'
+logger.info(f"Command to predict visibilities for exponential: {predict_cmd}")
+os.system(predict_cmd)
+logger.info("Exponential model predicted.")
+logger.info("Injecting exponential into the column 'exponential'...")
+
+ts = pt.table(ms, readonly=False)
+colnames = ts.colnames()
+stepsize = 10000
+data_column = 'DATA'
+for row in range(0, ts.nrows(), stepsize):
+    print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
+    data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+    model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+    ts.putcol('exponential', data+model, startrow=row, nrow=stepsize, rowincr=1)
+ts.close()
+logger.info("Model prediction and injection completed successfully.")
+
+logger.info('Imaging the radio halo at low resolution...')
+os.chdir(dir_halo_lr_shallow)
+logger.info('Source subtracted shallow image...')
+
+shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
+                        datacol = 'exponential', name = 'halo_lr', scale = 6, niter = 15000, 
+                        ms = ms, outname = 'halo_lr_shallow')
+logger.info(f"Running shallow imaging command: {shallow_cmd}")
+os.system(shallow_cmd)
+logger.info('Shallow image created.')
+    
+breizorro_shallow = f'breizorro.py -t 3 -r halo_lr_shallow-MFS-image.fits'
+logger.info(f"Making mask: {breizorro_shallow}")
+os.system(breizorro_shallow)
+move_mask = f'mv *.mask.fits {dir_halo_lr_deep}/'
+logger.info(f"Moving mask to deep image directory: {move_mask}")
+os.system(move_mask)
+
+os.chdir(dir_halo_lr_deep)
+deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
+                        datacol = 'exponential', name = 'halo_lr', scale = 6, niter = 10000000,
+                        outname = 'halo_lr_deep', ms = ms, mask = 'shallow')
+logger.info(f"Running deep imaging command: {deep_cmd}")
+os.system(deep_cmd)
+logger.info('Deep image created.')
+
+logger.info("All imaging and subtraction tasks completed successfully.")
+
 if not only_sub:
-    cols = ['inj', 'inj_exp', 'exp']
+    cols = ['inj', 'inj_exp']
     models = ['inj_sources', 'exponential']
     for col in cols:
         model_name = models[0] if col == 'inj' else models[1]
@@ -108,12 +171,12 @@ if not only_sub:
         colnames = ts.colnames()
         logger.info("Starting model injection into MS...")
         stepsize = 10000
-        data_column = 'inj' if col == 'inj_exp' else 'DATA'
+        data_column = 'DATA' if col == 'inj' else 'inj'
         for row in range(0, ts.nrows(), stepsize):
             print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-            data  = ts.getcol(data_column, startrow = row, nrow = stepsize, rowincr = 1)
-            model = ts.getcol('MODEL_DATA', startrow = row, nrow = stepsize, rowincr = 1)
-            ts.putcol(col, data + model, startrow = row, nrow = stepsize, rowincr = 1)
+            data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+            model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+            ts.putcol(col, data+model, startrow=row, nrow=stepsize, rowincr=1)
         ts.close()
     logger.info("Model prediction and injection completed successfully.")
     
@@ -121,7 +184,7 @@ if not only_sub:
     os.chdir(dir_shallow_img)
     shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
                             datacol = 'inj', name = name, scale = 6, niter = 15000, 
-                            ms = ms, outname = f'{name}_synth_shallow')
+                            ms = ms, outname = name + '_synth_shallow')
     logger.info(f"Running shallow imaging command: {shallow_cmd}")
     os.system(shallow_cmd)
 
@@ -136,7 +199,7 @@ if not only_sub:
     os.chdir(dir_deep_img)
     deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
                         datacol = 'inj', name = name, scale = 6, niter = 10000000,
-                        outname = f'{name}_synth_deep', ms = ms, mask = 'synth_shallow')
+                        outname = name + 'synth_deep', ms = ms, mask = 'synth_shallow')
     logger.info(f"Running deep imaging command: {deep_cmd}")
     os.system(deep_cmd)
 
@@ -144,7 +207,7 @@ if not only_sub:
     os.chdir(dir_exp_shallow)
     exp_shallow = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
                             datacol = 'inj_exp', name = name, scale = 6, niter = 15000, 
-                            ms = ms, outname = f'{name}_exp_shallow')
+                            ms = ms, outname = name + '_exp_shallow')
     logger.info(f"Running shallow imaging command: {exp_shallow}")
     os.system(exp_shallow)
 
@@ -159,34 +222,10 @@ if not only_sub:
     os.chdir(dir_exp_deep)
     exp_deep = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
                            datacol = 'inj_exp', name = name, scale = 6, niter = 10000000,
-                           ms = ms, outname = f'{name}_exp_deep', mask = 'exp_shallow')
+                           ms = ms, outname = name + '_exp_deep', mask = 'exp_shallow')
     logger.info(f"Running deep imaging command: {exp_deep}")
     os.system(exp_deep)
-
-
-    # Imaging with injected only exponential
-    os.chdir(dir_exp_only_shallow)
-    exp_shallow = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
-                            datacol = 'exp', name = name, scale = 6, niter = 15000, 
-                            ms = ms, outname = f'{name}_only_exp_shallow')
-    logger.info(f"Running shallow imaging command: {exp_shallow}")
-    os.system(exp_shallow)
-
-    breizorro_shallow = f'breizorro.py -t 3 -r {name}_only_exp_shallow-MFS-image.fits'
-    logger.info(f"Making mask: {breizorro_shallow}")
-    os.system(breizorro_shallow)
-
-    move_mask = f'mv *.mask.fits {dir_exp_only_deep}/'
-    logger.info(f"Moving mask to deep image directory: {move_mask}")
-    os.system(move_mask)
-
-    os.chdir(dir_exp_only_deep)
-    exp_deep = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60, 
-                           datacol = 'exp', name = name, scale = 6, niter = 10000000,
-                           ms = ms, outname = f'{name}_only_exp_deep', mask = 'only_exp_shallow')
-    logger.info(f"Running deep imaging command: {exp_deep}")
-    os.system(exp_deep)
-
+    
 else:
     logger.info('Skipping injection and imaging of sources, only subtraction and following steps will be performed.')
 
@@ -198,7 +237,7 @@ logger.info(f"Running shallow image for subtraction command: {img_sub_shallow}")
 os.system(img_sub_shallow)
 logger.info('Shallow image created.')
 
-breizorro_shallow = f'breizorro.py -t 4 -r highcut_shallow-MFS-image.fits'
+breizorro_shallow = f'breizorro.py -t 5 -r highcut_shallow-MFS-image.fits'
 logger.info(f"Making mask for shallow image: {breizorro_shallow}")
 os.system(breizorro_shallow)
 move_mask = f'mv *.mask.fits {dir_uvcut_deep}/'
@@ -228,9 +267,9 @@ data_column = 'inj_exp'
 outcolumn = 'sub'
 for row in range(0, ts.nrows(), stepsize):
     print(f"Doing {row} out of {ts.nrows()}, (step: {stepsize})")
-    data  = ts.getcol(data_column, startrow = row, nrow = stepsize, rowincr = 1)
-    model = ts.getcol('MODEL_DATA', startrow = row, nrow = stepsize, rowincr = 1)
-    ts.putcol(outcolumn, data - model, startrow = row, nrow = stepsize, rowincr = 1)
+    data  = ts.getcol(data_column, startrow=row, nrow=stepsize, rowincr=1)
+    model = ts.getcol('MODEL_DATA', startrow=row, nrow=stepsize, rowincr=1)
+    ts.putcol(outcolumn, data-model, startrow=row, nrow=stepsize, rowincr=1)
 ts.close()
 logger.info("Subtraction completed successfully.")
 
@@ -239,8 +278,8 @@ os.chdir(dir_sub_shallow)
 logger.info('Source subtracted shallow image...')
 
 shallow_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = 'A2219', scale = 6, niter = 15000, 
-                        ms = ms, outname = f'{name}_sub_shallow')
+                        datacol = 'sub', name = 'A2244', scale = 6, niter = 15000, 
+                        ms = ms, outname = name + '_sub_shallow')
 logger.info(f"Running shallow imaging command: {shallow_cmd}")
 os.system(shallow_cmd)
 logger.info('Shallow image created.')
@@ -248,15 +287,14 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r {name}_sub_shallow-MFS-image.fits'
 logger.info(f"Making mask: {breizorro_shallow}")
 os.system(breizorro_shallow)
-
 move_mask = f'mv *.mask.fits {dir_sub_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
 
 os.chdir(dir_sub_deep)
 deep_cmd = wsclean_cmd(minuv = 80, size = 480, briggs = -0.5, taper = 60,
-                        datacol = 'sub', name = 'A2219', scale = 6, niter = 10000000,
-                        outname = f'{name}_sub_deep', ms = ms, mask = 'sub_shallow')
+                        datacol = 'sub', name = 'A2244', scale = 6, niter = 10000000,
+                        outname = name + '_sub_deep', ms = ms, mask = 'sub_shallow')
 logger.info(f"Running deep imaging command: {deep_cmd}")
 os.system(deep_cmd)
 logger.info('Deep image created.')
@@ -275,7 +313,6 @@ logger.info('Shallow image created.')
 breizorro_shallow = f'breizorro.py -t 3 -r halo_hr_shallow-MFS-image.fits'
 logger.info(f"Making mask: {breizorro_shallow}")
 os.system(breizorro_shallow)
-
 move_mask = f'mv *.mask.fits {dir_halo_hr_deep}/'
 logger.info(f"Moving mask to deep image directory: {move_mask}")
 os.system(move_mask)
