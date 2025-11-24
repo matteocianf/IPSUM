@@ -373,6 +373,8 @@ if not list:
       r_amin = r / scale / 60        # radius in arcmin
       area   = np.pi * r_amin**2     # area in arcmin^2
       n_points = int(density * area) # Total number of points to generate
+      flux_histogram = np.array([n_points])
+      flux_bin_edges = np.linspace(3, 3, len(flux_histogram) + 1) * rms 
    logger.info(f"Total number of points to generate: {n_points}")
    logger.info(f"The flux bins are: \n{flux_bin_edges*1e3} mJy")
 else:
