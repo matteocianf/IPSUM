@@ -68,7 +68,7 @@ dir_halo_lr_deep = os.path.join(dir_img, 'halo_lr_deep')
 
 dirs_to_create = [dir_shallow_img, dir_deep_img, dir_exp_shallow, dir_exp_deep,
                 dir_sub_shallow, dir_sub_deep, dir_uvcut_shallow, dir_uvcut_deep,
-                dir_halo_hr_shallow, dir_halo_hr_deep]
+                dir_halo_hr_shallow, dir_halo_hr_deep, dir_halo_lr_shallow, dir_halo_lr_deep]
 for d in dirs_to_create:
     directory(d)
 
@@ -98,14 +98,14 @@ ts  = pt.table(f'{ms}', readonly=False)
 colnames = ts.colnames()
 ts.close()   
 if 'exponential' in colnames:
-    logger.info(f"Column 'exponential' already exists in MS: {name}")
+    logger.info(f"Column 'exponential' already exists in MS: {ms}")
 else:
-    logger.info(f"Adding column 'exponential' to MS: {name}")
-    cmd = f'DP3 msin={ms}.MS msout=. steps=[] msout.datacolumn=exponential \
+    logger.info(f"Adding column 'exponential' to MS: {ms}")
+    cmd = f'DP3 msin={ms} msout=. steps=[] msout.datacolumn=exponential \
             msin.datacolumn=DATA msout.storagemanager=dysco >log_add_column.txt'
     logger.info(f"Command to add column: {cmd}")
     os.system(cmd)
-    logger.info(f"Column 'exponential' added to MS: {name}") 
+    logger.info(f"Column 'exponential' added to MS: {ms}") 
 
 logger.info(f"Injecting exponential in a single column")
 predict_cmd = f'wsclean -predict -name {dir_img}/exponential {dir_mss}/{mss_name} \
