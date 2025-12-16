@@ -1,4 +1,4 @@
-# INTACT (INjector of mock poinT sources in gAlaxy ClusTers)
+# IPSUM (Injector of Point SoUrces in Mock observations)
 
 INTACT (INjector of mock poinT sources in gAlaxy ClusTers) - Pipeline to create a mock observation starting from a real one and injecting discrete sources in it. This is specifically thought for galaxy clusters
 The current requirements are:
@@ -65,7 +65,7 @@ Look at LoSiTo documentation for more information.
 
 ### source_generator.py
 
-#### intact.parset
+#### ipsum.parset
 
 Parset used for the creation of point sources model and radio halo model:
 
