@@ -315,7 +315,7 @@ logger.info(f"Image directory: {dir_img}")
 logger.info(f"Parset directory: {dir_parsets}")
 logger.info(f"Plots directory: {dir_plots}")
 
-parset    = os.path.join(dir_parsets, 'intact.parset')
+parset    = os.path.join(dir_parsets, 'ipsum.parset')
 variables = {}
 try:
    with open(parset, 'r') as file:
