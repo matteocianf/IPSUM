@@ -32,13 +32,13 @@ def wsclean_cmd(minuv, size, briggs, taper, datacol, name, scale, niter, ms, out
             -clean-border 1 -mgain 0.8 -fit-beam -data-column {datacol} \
             -join-channels -channels-out 6 -padding 1.4 -multiscale \
             -multiscale-scales 0,4,8,16,32 -fit-spectral-pol 3 -pol i \
-            -baseline-averaging 8.52211548825 -name {outname} \
+            -name {outname} \
             -scale {scale}arcsec -niter {niter} '
     if mask != '':
         if name != '':
-            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 2.5 '
+            cmd += f'-fits-mask {name}_{mask}-MFS-image.mask.fits -auto-threshold 1 '
         else:
-            cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 2.5 '
+            cmd += f'-fits-mask {mask}-MFS-image.mask.fits -auto-threshold 1 '
     if taper != 0:
         cmd += f'-taper-gaussian {taper}arcsec '
     cmd += f'{ms} >log.txt'
